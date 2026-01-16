@@ -111,7 +111,7 @@ export default function ProblemFilters({
           </select>
         </label>
       </div>
-      <label className="flex items-center gap-2 text-sm text-text-secondary">
+      <label className="flex items-center gap-2 text-[13px] text-text-secondary">
         <input
           type="checkbox"
           className="h-4 w-4 rounded-sm border-border bg-background"

@@ -105,7 +105,7 @@ export default function DashboardPage() {
       <div className="flex items-center">
         <Link
           href="/problems"
-          className="text-sm text-text-secondary transition hover:text-text-primary"
+          className="text-[13px] text-text-secondary transition-colors duration-150 hover:text-text-primary"
         >
           Back to Problems
         </Link>

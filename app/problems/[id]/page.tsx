@@ -232,7 +232,7 @@ export default function QuestionPage() {
                 isListening ? stopListening() : startListening()
               }
             />
-            <span className="text-xs text-text-secondary">
+            <span className="text-[13px] text-text-secondary">
               {isListening
                 ? "Listening... typing disabled"
                 : "Type or use the mic"}

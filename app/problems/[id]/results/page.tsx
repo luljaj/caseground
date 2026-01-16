@@ -159,7 +159,7 @@ export default function ResultsPage() {
             Try Again
           </Button>
         </Link>
-        <Link href="/problems" className="text-sm text-text-secondary">
+        <Link href="/problems" className="text-[13px] text-text-secondary">
           Back to Problems
         </Link>
       </div>

@@ -24,7 +24,7 @@ export default function RootLayout({
         <AuthProvider>
           <div className="min-h-screen">
             <Nav />
-            <main className="relative px-6 py-8 md:px-12">{children}</main>
+            <main className="relative px-6 py-6 md:px-12">{children}</main>
           </div>
         </AuthProvider>
       </body>
