@@ -122,7 +122,7 @@ export default function ProblemsPage() {
         <ProblemList questions={pagedQuestions} completedIds={completedIds} />
       )}
       <div className="flex items-center justify-between">
-        <p className="text-xs text-text-secondary">
+        <p className="text-[13px] text-text-secondary">
           {filteredTotal} total questions
         </p>
         <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
