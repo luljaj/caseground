@@ -160,7 +160,7 @@ export default function QuestionPage() {
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-error/40 bg-error/10 p-4 text-sm text-error">
+      <div className="rounded-md border border-error/40 bg-error/10 p-4 text-sm text-error">
         {error}
       </div>
     );
@@ -183,12 +183,12 @@ export default function QuestionPage() {
         />
       </div>
       <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-2xl border border-border bg-surface/60 p-6">
-          <div className="flex items-center gap-4 border-b border-border/60 pb-4 text-sm">
+        <div className="rounded-md border border-border/80 bg-surface/40 p-6">
+          <div className="flex items-center gap-2 border-b border-border/60 pb-4 text-sm">
             <button
-              className={`rounded-full px-4 py-2 transition ${
+              className={`rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors duration-150 ${
                 activeTab === "question"
-                  ? "bg-accent/20 text-text-primary"
+                  ? "bg-accent/15 text-text-primary"
                   : "text-text-secondary hover:text-text-primary"
               }`}
               onClick={() => setActiveTab("question")}
@@ -196,9 +196,9 @@ export default function QuestionPage() {
               Question
             </button>
             <button
-              className={`rounded-full px-4 py-2 transition ${
+              className={`rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors duration-150 ${
                 activeTab === "submissions"
-                  ? "bg-accent/20 text-text-primary"
+                  ? "bg-accent/15 text-text-primary"
                   : "text-text-secondary hover:text-text-primary"
               }`}
               onClick={() => setActiveTab("submissions")}
@@ -218,7 +218,7 @@ export default function QuestionPage() {
             )}
           </div>
         </div>
-        <div className="flex flex-col gap-4 rounded-2xl border border-border bg-surface/60 p-6">
+        <div className="flex flex-col gap-4 rounded-md border border-border/80 bg-surface/40 p-6">
           <ResponseInput
             value={responseText}
             onChange={setResponseText}

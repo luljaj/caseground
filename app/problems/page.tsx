@@ -87,7 +87,7 @@ export default function ProblemsPage() {
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-semibold text-text-primary">Problems</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">Problems</h1>
         <p className="mt-2 text-sm text-text-secondary">
           Browse the full library of caseground prompts and track your progress.
         </p>
@@ -106,7 +106,7 @@ export default function ProblemsPage() {
         onSortChange={setSort}
       />
       {!user && notDone ? (
-        <div className="rounded-2xl border border-border bg-surface/60 p-4 text-sm text-text-secondary">
+        <div className="rounded-md border border-border/80 bg-surface/40 p-4 text-sm text-text-secondary">
           Sign in to filter by unfinished questions.
         </div>
       ) : null}
@@ -115,7 +115,7 @@ export default function ProblemsPage() {
           <Spinner size={28} />
         </div>
       ) : error ? (
-        <div className="rounded-2xl border border-error/40 bg-error/10 p-4 text-sm text-error">
+        <div className="rounded-md border border-error/40 bg-error/10 p-4 text-sm text-error">
           {error}
         </div>
       ) : (

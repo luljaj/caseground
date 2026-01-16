@@ -28,10 +28,10 @@ export default function Pagination({
       {pages.map((pageNumber) => (
         <button
           key={pageNumber}
-          className={`h-8 w-8 rounded-full border text-xs transition ${
+          className={`h-8 w-8 rounded-md border text-[13px] transition-colors duration-150 ${
             pageNumber == page
-              ? "border-accent bg-accent/20 text-text-primary"
-              : "border-border text-text-secondary hover:border-accent/40"
+              ? "border-accent bg-accent/15 text-text-primary"
+              : "border-border text-text-secondary hover:border-accent/40 hover:text-text-primary"
           }`}
           onClick={() => onPageChange(pageNumber)}
         >

@@ -53,12 +53,12 @@ export default function ProblemFilters({
       : [{ label: "All Categories", value: "all" as const }, ...categoryOptions[track]];
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-surface/60 p-4 md:flex-row md:items-center md:justify-between">
+    <div className="flex flex-col gap-4 rounded-md border border-border/80 bg-surface/60 p-4 md:flex-row md:items-center md:justify-between">
       <div className="flex flex-1 flex-col gap-3 md:flex-row">
-        <label className="flex flex-col gap-1 text-xs uppercase tracking-[0.2em] text-text-secondary">
+        <label className="flex flex-col gap-1 text-[11px] font-medium uppercase tracking-[0.18em] text-text-secondary">
           Track
           <select
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-text-primary"
+            className="rounded-md border border-border bg-background px-3 py-2 text-sm text-text-primary transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             value={track}
             onChange={(event) => onTrackChange(event.target.value as Track | "all")}
           >
@@ -69,10 +69,10 @@ export default function ProblemFilters({
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-xs uppercase tracking-[0.2em] text-text-secondary">
+        <label className="flex flex-col gap-1 text-[11px] font-medium uppercase tracking-[0.18em] text-text-secondary">
           Category
           <select
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-text-primary"
+            className="rounded-md border border-border bg-background px-3 py-2 text-sm text-text-primary transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             value={category}
             onChange={(event) =>
               onCategoryChange(event.target.value as Category | "all")
@@ -90,10 +90,10 @@ export default function ProblemFilters({
             )}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-xs uppercase tracking-[0.2em] text-text-secondary">
+        <label className="flex flex-col gap-1 text-[11px] font-medium uppercase tracking-[0.18em] text-text-secondary">
           Sort
           <select
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-text-primary"
+            className="rounded-md border border-border bg-background px-3 py-2 text-sm text-text-primary transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             value={`${sort.field}:${sort.direction}`}
             onChange={(event) => {
               const [field, direction] = event.target.value.split(":");
@@ -114,7 +114,7 @@ export default function ProblemFilters({
       <label className="flex items-center gap-2 text-sm text-text-secondary">
         <input
           type="checkbox"
-          className="h-4 w-4 rounded border-border bg-background"
+          className="h-4 w-4 rounded-sm border-border bg-background"
           checked={notDone}
           onChange={(event) => onNotDoneChange(event.target.checked)}
         />

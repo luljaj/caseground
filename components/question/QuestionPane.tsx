@@ -9,18 +9,18 @@ const trackLabels: Record<Question["track"], string> = {
 export default function QuestionPane({ question }: { question: Question }) {
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3 text-xs text-text-secondary">
-        <span className="rounded-full border border-border bg-border/40 px-3 py-1">
+      <div className="flex flex-wrap items-center gap-2 text-[12px] text-text-secondary">
+        <span className="rounded-md border border-border/80 bg-surface/50 px-3 py-1">
           {trackLabels[question.track]}
         </span>
-        <span className="rounded-full border border-border bg-border/40 px-3 py-1">
+        <span className="rounded-md border border-border/80 bg-surface/50 px-3 py-1">
           {question.category}
         </span>
-        <span className="rounded-full border border-border bg-border/40 px-3 py-1">
+        <span className="rounded-md border border-border/80 bg-surface/50 px-3 py-1">
           {question.suggested_time} min suggested
         </span>
       </div>
-      <div className="rounded-2xl border border-border bg-background/40 p-4">
+      <div className="rounded-md border border-border/80 bg-background/30 p-4">
         <p className="text-xs uppercase tracking-[0.2em] text-text-secondary">
           Question
         </p>
@@ -33,7 +33,7 @@ export default function QuestionPane({ question }: { question: Question }) {
         </p>
       </div>
       {question.companies?.length ? (
-        <div className="rounded-2xl border border-border bg-background/40 p-4 text-xs text-text-secondary">
+        <div className="rounded-md border border-border/80 bg-background/30 p-4 text-xs text-text-secondary">
           Common companies: {question.companies.join(", ")}
         </div>
       ) : null}

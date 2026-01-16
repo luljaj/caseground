@@ -18,7 +18,7 @@ export default function SubmissionsTab({
       {responses.map((response) => (
         <div
           key={response.id}
-          className="rounded-2xl border border-border bg-background/40 p-4"
+          className="rounded-md border border-border/80 bg-background/30 p-4"
         >
           <div className="flex items-center justify-between text-xs text-text-secondary">
             <span>{new Date(response.created_at).toLocaleString()}</span>

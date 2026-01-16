@@ -19,35 +19,43 @@ export default function ProblemRow({
     question.prompt.length > 90
       ? `${question.prompt.slice(0, 90)}...`
       : question.prompt;
+  const statusLabel = isCompleted ? "Done" : "Not started";
 
   return (
-    <tr className="border-b border-border/60 text-sm transition hover:bg-border/20">
-      <td className="px-3 py-3 text-text-secondary">{question.number}</td>
-      <td className="px-3 py-3">
+    <tr className="group border-b border-border/60 text-sm transition-colors duration-150 hover:bg-surface/30">
+      <td className="relative px-6 py-4 text-text-secondary">
+        <span className="absolute inset-y-0 left-0 w-0.5 bg-transparent transition-colors duration-150 group-hover:bg-accent" />
+        {question.number}
+      </td>
+      <td className="px-6 py-4">
         <Link
           href={`/problems/${question.id}`}
-          className="text-text-primary transition hover:text-accent"
+          className="text-text-primary transition-colors duration-150 hover:text-accent"
         >
           <span className="block text-sm font-semibold text-text-primary">
             {title}
           </span>
-          <span className="block text-xs text-text-secondary">{prompt}</span>
+          <span className="mt-1 block text-[13px] text-text-secondary">
+            {prompt}
+          </span>
         </Link>
       </td>
-      <td className="px-3 py-3 text-xs text-text-secondary">
+      <td className="px-6 py-4 text-[13px] text-text-secondary">
         {trackLabels[question.track]}
       </td>
-      <td className="px-3 py-3 text-xs text-text-secondary">
+      <td className="px-6 py-4 text-[13px] text-text-secondary">
         {question.category}
       </td>
-      <td className="px-3 py-3 text-xs">
-        {isCompleted ? (
-          <span className="rounded-full border border-success/40 bg-success/10 px-2 py-1 text-success">
-            Done
-          </span>
-        ) : (
-          <span className="text-text-secondary">-</span>
-        )}
+      <td className="px-6 py-4 text-[13px]">
+        <span className="flex items-center gap-2 text-text-secondary">
+          <span
+            className={`h-2 w-2 rounded-full ${
+              isCompleted ? "bg-success" : "bg-border"
+            }`}
+            aria-hidden="true"
+          />
+          {statusLabel}
+        </span>
       </td>
     </tr>
   );
