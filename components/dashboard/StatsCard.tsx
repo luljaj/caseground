@@ -9,7 +9,7 @@ export default function StatsCard({
 }) {
   return (
     <div className="rounded-md border border-border/80 bg-surface/40 p-4">
-      <p className="text-[11px] uppercase tracking-[0.2em] text-text-secondary">
+      <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-text-secondary">
         {label}
       </p>
       <p className="mt-3 text-2xl font-semibold text-text-primary">{value}</p>

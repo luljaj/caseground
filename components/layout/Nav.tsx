@@ -8,7 +8,7 @@ export default function Nav() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3 md:px-12">
         <div className="flex items-center gap-8">
           <Logo />
-          <div className="hidden gap-6 text-[13px] text-text-secondary md:flex">
+          <div className="hidden gap-6 text-[13px] font-medium text-text-secondary md:flex">
             <Link
               className="transition-colors duration-150 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
               href="/problems"
@@ -25,7 +25,7 @@ export default function Nav() {
         </div>
         <div className="flex items-center gap-4">
           <Link
-            className="text-[13px] text-text-secondary transition-colors duration-150 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 md:hidden"
+            className="text-[13px] font-medium text-text-secondary transition-colors duration-150 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 md:hidden"
             href="/problems"
           >
             Problems
