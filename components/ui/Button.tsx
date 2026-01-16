@@ -10,18 +10,20 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const baseClasses =
-  "inline-flex items-center justify-center rounded-full border text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex items-center justify-center rounded-md border text-sm font-medium transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:pointer-events-none disabled:opacity-50";
 
 const variants: Record<Variant, string> = {
   primary: "border-accent bg-accent text-white hover:bg-accent/90",
-  secondary: "border-border bg-surface text-text-primary hover:border-accent/50",
-  ghost: "border-transparent bg-transparent text-text-secondary hover:text-text-primary",
+  secondary:
+    "border-border bg-surface text-text-primary hover:border-accent/40 hover:text-text-primary",
+  ghost:
+    "border-transparent bg-transparent text-text-secondary hover:text-text-primary",
 };
 
 const sizes: Record<Size, string> = {
-  sm: "px-3 py-1.5 text-xs",
+  sm: "px-3 py-1.5 text-[13px]",
   md: "px-4 py-2",
-  lg: "px-5 py-2.5 text-base",
+  lg: "px-5 py-2.5 text-sm",
 };
 
 export default function Button({
