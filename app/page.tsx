@@ -1,9 +1,11 @@
 import Link from "next/link";
+import DistortionGrid from "@/components/ui/DistortionGrid";
 
 export default function HomePage() {
   return (
-    <section className="relative overflow-hidden px-6 py-12 md:px-12 md:py-20">
+    <section className="relative overflow-hidden px-6 py-12 md:px-12 md:py-20 min-h-[80vh] flex flex-col justify-center">
       <div className="absolute inset-0 bg-atmosphere pointer-events-none" />
+      <DistortionGrid />
       
       <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center text-center gap-10">
         <div className="animate-fade-up">
@@ -45,9 +47,10 @@ export default function HomePage() {
               copy: "Logic puzzles for clarity.",
             },
           ].map((card) => (
-            <div
+            <Link
               key={card.title}
-              className="group rounded-lg border border-border bg-surface/50 p-6 hover:border-white/10 hover:bg-surface transition-all duration-200"
+              href={`/problems?track=${card.title.toLowerCase()}`}
+              className="group rounded-lg border border-border bg-surface/50 p-6 hover:border-white/10 hover:bg-white/5 transition-all duration-200"
             >
               <h3 className="text-[15px] font-medium text-text-primary">
                 {card.title}
@@ -55,7 +58,7 @@ export default function HomePage() {
               <p className="mt-1 text-[14px] text-text-secondary group-hover:text-text-secondary/80">
                 {card.copy}
               </p>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

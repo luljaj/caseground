@@ -4,6 +4,10 @@ const config: Config = {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./lib/**/*.{ts,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["var(--font-manrope)"],
+        inter: ["var(--font-inter)"],
+      },
       colors: {
         background: "var(--background)",
         surface: "var(--surface)",

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import ProblemFilters from "@/components/problems/ProblemFilters";
 import ProblemList from "@/components/problems/ProblemList";
 import Pagination from "@/components/problems/Pagination";
@@ -12,9 +13,12 @@ import type { Category, SortParams, Track } from "@/types";
 const PER_PAGE = 30;
 const MAX_FETCH = 1000;
 
-export default function ProblemsPage() {
+function ProblemsContent() {
   const { user } = useAuth();
-  const [track, setTrack] = useState<Track | "all">("all");
+  const searchParams = useSearchParams();
+  const initialTrack = searchParams.get("track") as Track | null;
+
+  const [track, setTrack] = useState<Track | "all">(initialTrack ?? "all");
   const [category, setCategory] = useState<Category | "all">("all");
   const [notDone, setNotDone] = useState(false);
   const [sort, setSort] = useState<SortParams>({
@@ -85,13 +89,11 @@ export default function ProblemsPage() {
     : filteredQuestions;
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-text-primary">Problems</h1>
-        <p className="mt-2 text-sm text-text-secondary">
-          Browse the full library of caseground prompts and track your progress.
-        </p>
+    <div className="mx-auto flex max-w-6xl flex-col gap-8 pb-12">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-semibold tracking-tight text-text-primary">Problems</h1>
       </div>
+      
       <ProblemFilters
         track={track}
         category={category}
@@ -105,28 +107,43 @@ export default function ProblemsPage() {
         onNotDoneChange={setNotDone}
         onSortChange={setSort}
       />
+
       {!user && notDone ? (
-        <div className="rounded-md border border-border/80 bg-surface/40 p-4 text-sm text-text-secondary">
+        <div className="rounded-lg border border-border bg-surface/50 p-4 text-sm text-text-secondary">
           Sign in to filter by unfinished questions.
         </div>
       ) : null}
+
       {loading ? (
-        <div className="flex justify-center py-12">
-          <Spinner size={28} />
+        <div className="flex justify-center py-20">
+          <Spinner size={32} />
         </div>
       ) : error ? (
-        <div className="rounded-md border border-error/40 bg-error/10 p-4 text-sm text-error">
+        <div className="rounded-lg border border-error/20 bg-error/5 p-4 text-sm text-error">
           {error}
         </div>
       ) : (
         <ProblemList questions={pagedQuestions} completedIds={completedIds} />
       )}
-      <div className="flex items-center justify-between">
-        <p className="text-[13px] text-text-secondary">
+
+      <div className="flex items-center justify-between border-t border-white/5 pt-6">
+        <p className="text-sm text-text-secondary">
           {filteredTotal} total questions
         </p>
         <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
     </div>
+  );
+}
+
+export default function ProblemsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center py-20">
+        <Spinner size={32} />
+      </div>
+    }>
+      <ProblemsContent />
+    </Suspense>
   );
 }

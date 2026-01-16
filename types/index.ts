@@ -2,7 +2,13 @@ export type Track = "estimations" | "behaviorals" | "reasoning";
 
 export type EstimationsCategory = "market-sizing" | "volume" | "cost-revenue";
 export type BehavioralsCategory = "easy" | "medium" | "hard";
-export type ReasoningCategory = "logic";
+export type ReasoningCategory =
+  | "logic"
+  | "Financial Statements"
+  | "Valuation"
+  | "DCF Analysis"
+  | "Merger Models"
+  | "LBO Models";
 
 export type Category =
   | EstimationsCategory

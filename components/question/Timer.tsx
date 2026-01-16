@@ -24,6 +24,8 @@ export default function Timer({
     Math.max(1, Math.round(remainingSeconds / 60))
   );
 
+  const [isEditing, setIsEditing] = useState(false);
+
   useEffect(() => {
     if (status === "idle") {
       setDraftMinutes(Math.max(1, Math.round(remainingSeconds / 60)));
@@ -35,48 +37,51 @@ export default function Timer({
     if (Number.isFinite(minutes) && minutes > 0) {
       onSetDuration(minutes * 60);
     }
+    setIsEditing(false);
   };
 
   return (
-    <div className="flex flex-col items-center gap-3 rounded-md border border-border/80 bg-surface/40 px-4 py-3">
-      <div
-        className={`text-2xl font-semibold tracking-[0.2em] ${
-          status === "finished" ? "animate-pulse text-error" : "text-text-primary"
-        }`}
-      >
-        {formatTime(remainingSeconds)}
+    <div className="flex flex-col items-center gap-2">
+      <div className="relative group">
+         {isEditing ? (
+            <div className="flex items-center gap-2 h-[48px]">
+               <input
+                type="number"
+                min={1}
+                className="w-16 rounded border border-white/10 bg-transparent px-2 py-1 text-2xl font-mono text-center text-text-primary focus:outline-none focus:border-white/30"
+                value={draftMinutes}
+                onChange={(e) => setDraftMinutes(Number(e.target.value))}
+                onKeyDown={(e) => e.key === "Enter" && handleApply()}
+                autoFocus
+              />
+              <span className="text-sm text-text-secondary">min</span>
+              <button onClick={handleApply} className="text-xs text-accent hover:text-accent/80 ml-2">Save</button>
+            </div>
+         ) : (
+            <div 
+                onClick={() => status === "idle" && setIsEditing(true)}
+                className={`text-4xl font-mono font-medium tracking-tight cursor-pointer select-none transition-colors ${
+                    status === "finished" ? "text-error animate-pulse" : "text-text-primary hover:text-text-primary/80"
+                }`}
+                title="Click to edit duration"
+            >
+                {formatTime(remainingSeconds)}
+            </div>
+         )}
       </div>
-      <div className="flex flex-wrap items-center gap-2 text-[12px] text-text-secondary">
-        <label className="flex items-center gap-2">
-          <span>Edit time</span>
-          <input
-            type="number"
-            min={1}
-            className="w-20 rounded-md border border-border bg-background px-2 py-1 text-[12px] text-text-primary transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-            value={draftMinutes}
-            onChange={(event) => setDraftMinutes(Number(event.target.value))}
-            onBlur={handleApply}
-          />
-        </label>
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          onClick={handleApply}
-        >
-          Apply
-        </Button>
+      
+      <div className="flex items-center gap-2">
         {status === "running" ? (
-          <Button type="button" size="sm" variant="ghost" onClick={onPause}>
+          <Button size="sm" variant="secondary" onClick={onPause} className="h-7 px-3 text-xs border-white/10">
             Pause
           </Button>
         ) : (
-          <Button type="button" size="sm" variant="ghost" onClick={onStart}>
+          <Button size="sm" variant="secondary" onClick={onStart} className="h-7 px-3 text-xs border-white/10">
             Start
           </Button>
         )}
-        <Button type="button" size="sm" variant="ghost" onClick={onStop}>
-          Stop
+        <Button size="sm" variant="ghost" onClick={onStop} className="h-7 px-3 text-xs text-text-secondary hover:text-text-primary">
+            Reset
         </Button>
       </div>
     </div>

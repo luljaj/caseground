@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { RubricItem } from "@/types";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { cn } from "@/lib/utils/cn";
 
 export default function RubricChecklist({ items }: { items: RubricItem[] }) {
   const [checked, setChecked] = useState<Set<string>>(new Set());
@@ -19,21 +21,33 @@ export default function RubricChecklist({ items }: { items: RubricItem[] }) {
   };
 
   return (
-    <div className="space-y-3">
-      {items.map((item) => (
-        <label
-          key={item.id}
-          className="flex items-center gap-3 rounded-md border border-border/80 bg-background/30 px-3 py-2 text-sm text-text-secondary"
-        >
-          <input
-            type="checkbox"
-            checked={checked.has(item.id)}
-            onChange={() => toggle(item.id)}
-            className="h-4 w-4 rounded-sm border-border bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-          />
-          <span>{item.text}</span>
-        </label>
-      ))}
+    <div className="space-y-1">
+      {items.map((item) => {
+        const isChecked = checked.has(item.id);
+        return (
+          <div
+            key={item.id}
+            className="group flex items-start gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-white/[0.03]"
+          >
+            <div className="pt-0.5">
+                <Checkbox
+                    id={item.id}
+                    checked={isChecked}
+                    onChange={() => toggle(item.id)}
+                />
+            </div>
+            <label 
+                htmlFor={item.id}
+                className={cn(
+                    "cursor-pointer text-sm leading-relaxed transition-colors select-none",
+                    isChecked ? "text-text-secondary line-through opacity-70" : "text-text-primary"
+                )}
+            >
+              {item.text}
+            </label>
+          </div>
+        );
+      })}
     </div>
   );
 }

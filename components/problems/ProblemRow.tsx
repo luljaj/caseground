@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Question } from "@/types";
+import { cn } from "@/lib/utils/cn";
 
 const trackLabels: Record<Question["track"], string> = {
   estimations: "Estimations",
@@ -15,45 +16,54 @@ export default function ProblemRow({
   isCompleted: boolean;
 }) {
   const title = question.title || "Untitled";
-  const prompt =
-    question.prompt.length > 90
-      ? `${question.prompt.slice(0, 90)}...`
-      : question.prompt;
-  const statusLabel = isCompleted ? "done" : "not started";
 
   return (
-    <tr className="h-14 border-b border-border/60 text-sm transition-colors duration-150 hover:bg-surface/30">
-      <td className="px-6 py-0 align-middle text-text-secondary">
-        {question.number}
+    <tr className="group border-b border-white/5 transition-colors hover:bg-white/[0.02]">
+      <td className="px-6 py-4 align-middle">
+        {isCompleted ? (
+          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-success/20 bg-success/10 text-success">
+            <svg
+              viewBox="0 0 12 10"
+              fill="none"
+              aria-hidden="true"
+              className="h-3 w-3"
+            >
+              <path
+                d="M1 5L4.5 8.5L11 1.5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+        ) : (
+          <span className="inline-flex h-5 w-5" aria-hidden="true" />
+        )}
       </td>
-      <td className="px-6 py-0 align-middle">
+      <td className="px-6 py-4 align-middle">
+        <span className="text-xs font-medium text-text-secondary/60">
+          {question.number}
+        </span>
+      </td>
+      <td className="px-6 py-4 align-middle">
         <Link
           href={`/problems/${question.id}`}
-          className="text-text-primary transition-colors duration-150 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-0"
+          className="block"
         >
-          <span className="block text-[13px] font-semibold text-text-primary">
+          <span className="block text-sm font-medium text-text-primary transition-all duration-200 group-hover:text-white group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
             {title}
-          </span>
-          <span className="mt-0.5 block text-[12px] leading-tight text-text-secondary">
-            {prompt}
           </span>
         </Link>
       </td>
-      <td className="px-6 py-0 align-middle text-[13px] text-text-secondary">
-        {trackLabels[question.track]}
+      <td className="px-6 py-4 align-middle">
+         <span className="inline-flex items-center rounded border border-white/5 bg-white/5 px-2 py-0.5 text-[11px] text-text-secondary">
+          {trackLabels[question.track]}
+        </span>
       </td>
-      <td className="px-6 py-0 align-middle text-[13px] text-text-secondary">
-        {question.category}
-      </td>
-      <td className="px-6 py-0 align-middle">
-        <span className="flex items-center gap-2 text-[12px] lowercase text-text-secondary">
-          <span
-            className={`h-1.5 w-1.5 rounded-full ${
-              isCompleted ? "bg-success" : "bg-border"
-            }`}
-            aria-hidden="true"
-          />
-          {statusLabel}
+      <td className="px-6 py-4 align-middle">
+        <span className="inline-flex items-center rounded border border-white/5 bg-white/5 px-2 py-0.5 text-[11px] text-text-secondary">
+          {question.category}
         </span>
       </td>
     </tr>

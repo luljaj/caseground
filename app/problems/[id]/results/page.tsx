@@ -107,15 +107,15 @@ export default function ResultsPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <Spinner size={28} />
+      <div className="flex justify-center py-20">
+        <Spinner size={32} />
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="rounded-md border border-border/80 bg-surface/40 p-6 text-sm text-text-secondary">
+      <div className="mx-auto max-w-2xl rounded-lg border border-white/5 bg-surface/30 p-8 text-center text-sm text-text-secondary">
         Sign in to view your results.
       </div>
     );
@@ -123,7 +123,7 @@ export default function ResultsPage() {
 
   if (!question || !response || credits === null) {
     return (
-      <div className="rounded-md border border-border/80 bg-surface/40 p-6 text-sm text-text-secondary">
+      <div className="mx-auto max-w-2xl rounded-lg border border-white/5 bg-surface/30 p-8 text-center text-sm text-text-secondary">
         No results found for this attempt yet.
       </div>
     );
@@ -132,41 +132,55 @@ export default function ResultsPage() {
   const rubricItems = Array.isArray(question.rubric) ? question.rubric : [];
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6">
-      <div className="rounded-md border border-border/80 bg-surface/40 p-6">
-        <h1 className="text-2xl font-semibold text-text-primary">Your Response</h1>
-        <p className="mt-3 text-sm leading-relaxed text-text-secondary">
-          {response.response}
-        </p>
-      </div>
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-md border border-border/80 bg-surface/40 p-6">
-          <h2 className="text-lg font-semibold text-text-primary">Rubric</h2>
-          <div className="mt-4">
-            <RubricChecklist items={rubricItems} />
-          </div>
+    <div className="mx-auto flex max-w-[1200px] flex-col gap-8 px-6 pb-12">
+      <div className="flex items-center justify-between">
+        <div>
+            <h1 className="text-2xl font-semibold text-text-primary">Results</h1>
+            <p className="text-sm text-text-secondary">Review your performance and get feedback.</p>
         </div>
-        <div className="flex flex-col gap-4">
-          <ExampleAnswer answer={question.example_answer} />
+        <div className="flex gap-3">
+            <Link href={`/problems/${question.id}`}>
+            <Button size="sm" variant="secondary">
+                Try Again
+            </Button>
+            </Link>
+            <Link href="/problems">
+            <Button size="sm" variant="ghost">
+                Back to Problems
+            </Button>
+            </Link>
+        </div>
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="flex flex-col gap-8">
+            <div className="space-y-3">
+                <h3 className="text-xs font-medium uppercase tracking-wider text-text-secondary/60">
+                    Your Response
+                </h3>
+                <div className="rounded-lg border border-white/5 bg-surface/30 p-6 min-h-[200px]">
+                    <p className="text-[15px] leading-relaxed text-text-primary whitespace-pre-wrap font-sans">
+                        {response.response}
+                    </p>
+                </div>
+            </div>
+            
+            <div className="space-y-3">
+                 <h3 className="text-xs font-medium uppercase tracking-wider text-text-secondary/60">
+                    Rubric
+                </h3>
+                <RubricChecklist items={rubricItems} />
+            </div>
+        </div>
+
+        <div className="flex flex-col gap-6">
           <AIFeedback
             responseId={response.id}
             initialCredits={credits}
             initialFeedback={response.ai_feedback}
           />
+          <ExampleAnswer answer={question.example_answer} />
         </div>
-      </div>
-      <div className="flex flex-wrap items-center gap-3">
-        <Link href={`/problems/${question.id}`}>
-          <Button size="sm" variant="secondary">
-            Try Again
-          </Button>
-        </Link>
-        <Link
-          href="/problems"
-          className="text-[13px] text-text-secondary transition-colors duration-150 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-        >
-          Back to Problems
-        </Link>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Manrope } from "next/font/google";
+import { Manrope, Inter } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/layout/Nav";
 import AuthProvider from "@/components/layout/AuthProvider";
@@ -8,6 +8,14 @@ const manrope = Manrope({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
   display: "swap",
+  variable: "--font-manrope",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -23,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${manrope.className} min-h-screen bg-background text-text-primary`}
+        className={`${manrope.variable} ${inter.variable} font-sans min-h-screen bg-background text-text-primary`}
       >
         <AuthProvider>
           <div className="min-h-screen">

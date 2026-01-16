@@ -58,7 +58,7 @@ Table: `public.questions`
 - `id` uuid PK
 - `number` integer unique
 - `track` text: `estimations | behaviorals | reasoning`
-- `category` text
+- `category` text (estimations: `market-sizing | volume | cost-revenue`; behaviorals: `easy | medium | hard`; reasoning: `logic | Financial Statements | Valuation | DCF Analysis | Merger Models | LBO Models`)
 - `title` text (short 2-3 word title)
 - `prompt` text (main question prompt)
 - `description` text (extended clarification)
@@ -132,7 +132,7 @@ All routes live in `app/api/*`.
 
 ## UI Flows
 - **Landing** (`/`): intro + CTA to problems
-- **Problems** (`/problems`): filters + sorting + pagination, optional "Not done" toggle
+- **Problems** (`/problems`): table-first list with title + prompt preview, filters + sorting + pagination, optional "Not done" toggle
 - **Question** (`/problems/[id]`):
   - Question tab (title, prompt, description)
   - Submissions tab (requires auth)
@@ -144,6 +144,8 @@ All routes live in `app/api/*`.
 - Hook: `lib/hooks/useSpeechToText.ts`
 - Uses `window.SpeechRecognition` or `webkitSpeechRecognition`.
 - When active, typing is disabled and transcripts are appended to the response.
+- Mic stays active until the user clicks stop; the hook auto-restarts recognition
+  on `onend` while listening to avoid single-sentence cutoff.
 
 ## Timer
 - Hook: `lib/hooks/useTimer.ts`
@@ -153,6 +155,9 @@ All routes live in `app/api/*`.
 
 ## Styling
 - Tailwind with design tokens in `app/globals.css` (dark navy palette).
+- Visual language: LeetCode data density + Linear minimalism (tight table layout,
+  subtle borders, 4–6px radius, 150ms transitions, muted accent).
+- Typeface: Manrope via `app/layout.tsx`.
 - Utility helper: `lib/utils/cn.ts` for class merging.
 
 ## Common Tasks

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Button from "@/components/ui/Button";
 import Spinner from "@/components/ui/Spinner";
+import { cn } from "@/lib/utils/cn";
 
 export default function AIFeedback({
   responseId,
@@ -47,44 +48,57 @@ export default function AIFeedback({
   const showRetry = Boolean(error) && !feedback;
 
   return (
-    <div className="rounded-md border border-border/80 bg-background/30 p-4">
+    <div className={cn(
+        "rounded-lg border p-5 transition-all",
+        feedback 
+            ? "border-accent/20 bg-accent/5" 
+            : "border-white/5 bg-surface/30"
+    )}>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-text-primary">AI Feedback</h3>
+        <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-text-primary">AI Feedback</h3>
+            {feedback && <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] text-accent">Generated</span>}
+        </div>
         <span className="text-xs text-text-secondary">
           {credits} credits left
         </span>
       </div>
-      <div className="mt-3 text-sm leading-relaxed text-text-secondary">
+      
+      <div className="mt-4 text-[15px] leading-relaxed text-text-secondary">
         {feedback ? (
-          <p>{feedback}</p>
+          <p className="text-text-primary">{feedback}</p>
         ) : (
-          <p>Generate targeted feedback based on the rubric.</p>
+          <p className="italic text-text-secondary/60">Generate targeted feedback based on the rubric to improve your answer.</p>
         )}
       </div>
+
       {error ? (
-        <p className="mt-3 text-xs text-error">{error}</p>
+        <p className="mt-3 text-xs text-error bg-error/10 p-2 rounded">{error}</p>
       ) : null}
-      <div className="mt-4">
-        <Button
-          size="sm"
-          onClick={handleFetch}
-          disabled={loading || credits <= 0}
-        >
-          {loading ? (
-            <span className="flex items-center gap-2">
-              <Spinner size={14} /> Loading
-            </span>
-          ) : credits <= 0 ? (
-            "No credits remaining"
-          ) : feedback ? (
-            "Refresh feedback"
-          ) : showRetry ? (
-            `Retry feedback (${credits} credits left)`
-          ) : (
-            `Get AI Feedback (${credits} credits left)`
-          )}
-        </Button>
-      </div>
+
+      {!feedback || showRetry ? (
+        <div className="mt-5">
+            <Button
+            size="sm"
+            onClick={handleFetch}
+            disabled={loading || credits <= 0}
+            className="w-full sm:w-auto"
+            variant="primary"
+            >
+            {loading ? (
+                <span className="flex items-center gap-2">
+                <Spinner size={14} /> Generating...
+                </span>
+            ) : credits <= 0 ? (
+                "No credits remaining"
+            ) : showRetry ? (
+                "Retry feedback"
+            ) : (
+                "Generate Feedback"
+            )}
+            </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -1,8 +1,14 @@
 export default function ExampleAnswer({ answer }: { answer: string }) {
   return (
-    <div className="rounded-md border border-border/80 bg-background/30 p-4">
-      <h3 className="text-sm font-semibold text-text-primary">Example Answer</h3>
-      <p className="mt-3 text-sm leading-relaxed text-text-secondary">{answer}</p>
+    <div className="space-y-3">
+      <h3 className="text-xs font-medium uppercase tracking-wider text-text-secondary/60">
+        Example Answer
+      </h3>
+      <div className="rounded-lg border border-white/5 bg-surface/30 p-5">
+        <p className="text-[15px] leading-relaxed text-text-secondary">
+            {answer}
+        </p>
+      </div>
     </div>
   );
 }

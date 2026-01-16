@@ -1,4 +1,13 @@
 import type { Category, SortParams, Track } from "@/types";
+import { Checkbox } from "@/components/ui/Checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils/cn";
 
 const trackOptions: Array<{ label: string; value: Track | "all" }> = [
   { label: "All Tracks", value: "all" },
@@ -18,7 +27,14 @@ const categoryOptions: Record<Track, Array<{ label: string; value: Category }>> 
     { label: "Medium", value: "medium" },
     { label: "Hard", value: "hard" },
   ],
-  reasoning: [{ label: "Logic", value: "logic" }],
+  reasoning: [
+    { label: "Logic", value: "logic" },
+    { label: "Financial Statements", value: "Financial Statements" },
+    { label: "Valuation", value: "Valuation" },
+    { label: "DCF Analysis", value: "DCF Analysis" },
+    { label: "Merger Models", value: "Merger Models" },
+    { label: "LBO Models", value: "LBO Models" },
+  ],
 };
 
 const sortOptions = [
@@ -27,6 +43,73 @@ const sortOptions = [
   { label: "Track (Asc)", value: "track:asc" },
   { label: "Track (Desc)", value: "track:desc" },
 ];
+
+type DropdownOption = { label: string; value: string };
+
+const dropdownTriggerStyles =
+  "flex h-9 w-[140px] items-center justify-between rounded-md border border-white/10 bg-surface px-3 py-2 text-sm text-text-primary shadow-sm transition-colors hover:border-white/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50";
+
+function DropdownSelect({
+  value,
+  options,
+  onValueChange,
+  placeholder = "Select",
+  disabled = false,
+  ariaLabel,
+}: {
+  value: string;
+  options: DropdownOption[];
+  onValueChange: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  ariaLabel: string;
+}) {
+  const selectedLabel =
+    options.find((option) => option.value === value)?.label ?? placeholder;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            dropdownTriggerStyles,
+            disabled && "text-text-secondary/70"
+          )}
+          disabled={disabled}
+          aria-label={ariaLabel}
+        >
+          <span className="truncate">{selectedLabel}</span>
+          <svg
+            className="ml-2 h-3 w-3 shrink-0 opacity-60"
+            viewBox="0 0 10 6"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M1 1L5 5L9 1"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      </DropdownMenuTrigger>
+      {disabled ? null : (
+        <DropdownMenuContent align="start" className="min-w-[140px]">
+          <DropdownMenuRadioGroup value={value} onValueChange={onValueChange}>
+            {options.map((option) => (
+              <DropdownMenuRadioItem key={option.value} value={option.value}>
+                {option.label}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      )}
+    </DropdownMenu>
+  );
+}
 
 export default function ProblemFilters({
   track,
@@ -51,75 +134,93 @@ export default function ProblemFilters({
     track === "all"
       ? []
       : [{ label: "All Categories", value: "all" as const }, ...categoryOptions[track]];
+  const sortValue = `${sort.field}:${sort.direction}`;
+  const isCategoryDisabled = track === "all";
+
+  const tracks: Array<{ label: string; value: Track }> = [
+    { label: "Estimations", value: "estimations" },
+    { label: "Behaviorals", value: "behaviorals" },
+    { label: "Reasoning", value: "reasoning" },
+  ];
 
   return (
-    <div className="flex flex-col gap-4 rounded-md border border-border/80 bg-surface/40 p-4 md:flex-row md:items-center md:justify-between">
-      <div className="flex flex-1 flex-col gap-3 md:flex-row">
-        <label className="flex flex-col gap-1 text-[11px] font-medium uppercase tracking-[0.18em] text-text-secondary">
-          Track
-          <select
-            className="rounded-md border border-border bg-background px-3 py-2 text-sm text-text-primary transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-1 flex-wrap gap-2">
+          <DropdownSelect
             value={track}
-            onChange={(event) => onTrackChange(event.target.value as Track | "all")}
-          >
-            {trackOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-[11px] font-medium uppercase tracking-[0.18em] text-text-secondary">
-          Category
-          <select
-            className="rounded-md border border-border bg-background px-3 py-2 text-sm text-text-primary transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            options={trackOptions}
+            onValueChange={(value) => onTrackChange(value as Track | "all")}
+            placeholder="All Tracks"
+            ariaLabel="Track"
+          />
+          <DropdownSelect
             value={category}
-            onChange={(event) =>
-              onCategoryChange(event.target.value as Category | "all")
+            options={categories}
+            onValueChange={(value) =>
+              onCategoryChange(value as Category | "all")
             }
-            disabled={track === "all"}
-          >
-            {track === "all" ? (
-              <option value="all">All Categories</option>
-            ) : (
-              categories.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))
-            )}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-[11px] font-medium uppercase tracking-[0.18em] text-text-secondary">
-          Sort
-          <select
-            className="rounded-md border border-border bg-background px-3 py-2 text-sm text-text-primary transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-            value={`${sort.field}:${sort.direction}`}
-            onChange={(event) => {
-              const [field, direction] = event.target.value.split(":");
+            placeholder="Category"
+            disabled={isCategoryDisabled}
+            ariaLabel="Category"
+          />
+          <DropdownSelect
+            value={sortValue}
+            options={sortOptions}
+            onValueChange={(value) => {
+              const [field, direction] = value.split(":");
               onSortChange({
                 field: field as SortParams["field"],
                 direction: direction as SortParams["direction"],
               });
             }}
-          >
-            {sortOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            placeholder="Sort"
+            ariaLabel="Sort"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox 
+            id="hide-completed"
+            checked={notDone}
+            onChange={(event) => onNotDoneChange(event.target.checked)}
+          />
+          <label htmlFor="hide-completed" className="text-sm text-text-secondary select-none cursor-pointer">
+            Hide completed
+          </label>
+        </div>
       </div>
-      <label className="flex items-center gap-2 text-[13px] text-text-secondary">
-        <input
-          type="checkbox"
-          className="h-4 w-4 rounded-sm border-border bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-          checked={notDone}
-          onChange={(event) => onNotDoneChange(event.target.checked)}
-        />
-        Not done
-      </label>
+      
+      {/* Track Pills */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+         <span className="text-[11px] font-medium uppercase tracking-wider text-text-secondary/60 mr-2">
+            Tracks
+         </span>
+         <button
+            onClick={() => onTrackChange("all")}
+            className={cn(
+                "rounded-full border px-3 py-1 text-xs font-medium transition-colors whitespace-nowrap",
+                track === "all"
+                    ? "border-white/20 bg-white/10 text-white"
+                    : "border-transparent bg-transparent text-text-secondary hover:text-text-primary hover:bg-white/5"
+            )}
+         >
+            All
+         </button>
+         {tracks.map((t) => (
+            <button
+                key={t.value}
+                onClick={() => onTrackChange(t.value)}
+                className={cn(
+                    "rounded-full border px-3 py-1 text-xs font-medium transition-colors whitespace-nowrap",
+                    track === t.value
+                        ? "border-white/20 bg-white/10 text-white"
+                        : "border-transparent bg-transparent text-text-secondary hover:text-text-primary hover:bg-white/5"
+                )}
+            >
+                {t.label}
+            </button>
+         ))}
+      </div>
     </div>
   );
 }

@@ -152,15 +152,15 @@ export default function QuestionPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <Spinner size={28} />
+      <div className="flex justify-center py-20">
+        <Spinner size={32} />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-md border border-error/40 bg-error/10 p-4 text-sm text-error">
+      <div className="mx-auto max-w-2xl rounded-lg border border-error/20 bg-error/5 p-4 text-sm text-error">
         {error}
       </div>
     );
@@ -171,78 +171,88 @@ export default function QuestionPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6">
-      <div className="flex justify-center">
-        <Timer
-          remainingSeconds={timer.remainingSeconds}
-          status={timer.status}
-          onStart={timer.start}
-          onPause={timer.pause}
-          onStop={timer.stop}
-          onSetDuration={timer.setDuration}
-        />
-      </div>
-      <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-md border border-border/80 bg-surface/40 p-6">
-          <div className="flex items-center gap-2 border-b border-border/60 pb-4 text-sm">
-            <button
-              className={`rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors duration-150 ${
-                activeTab === "question"
-                  ? "bg-accent/15 text-text-primary"
-                  : "text-text-secondary hover:text-text-primary"
-              } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40`}
-              onClick={() => setActiveTab("question")}
-            >
-              Question
-            </button>
-            <button
-              className={`rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors duration-150 ${
-                activeTab === "submissions"
-                  ? "bg-accent/15 text-text-primary"
-                  : "text-text-secondary hover:text-text-primary"
-              } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40`}
-              onClick={() => setActiveTab("submissions")}
-            >
-              Submissions
-            </button>
-          </div>
-          <div className="mt-6">
-            {activeTab === "question" ? (
-              <QuestionPane question={question} />
-            ) : user ? (
-              <SubmissionsTab responses={responses} />
-            ) : (
-              <div className="text-sm text-text-secondary">
-                Sign in to see your submissions.
-              </div>
-            )}
-          </div>
+    <div className="mx-auto flex h-[calc(100vh-100px)] max-w-[1400px] flex-col gap-6 px-4 pb-6 md:flex-row md:px-8">
+      {/* Left Column: Question Content */}
+      <div className="flex flex-1 flex-col gap-6 overflow-y-auto pr-2 md:max-w-[50%]">
+        <div className="flex items-center gap-6 border-b border-white/5 pb-2">
+            <div className="flex gap-4">
+                <button
+                    className={`pb-2 text-sm font-medium transition-colors ${
+                    activeTab === "question"
+                        ? "border-b border-accent text-text-primary"
+                        : "text-text-secondary hover:text-text-primary"
+                    }`}
+                    onClick={() => setActiveTab("question")}
+                >
+                    Problem
+                </button>
+                <button
+                    className={`pb-2 text-sm font-medium transition-colors ${
+                    activeTab === "submissions"
+                        ? "border-b border-accent text-text-primary"
+                        : "text-text-secondary hover:text-text-primary"
+                    }`}
+                    onClick={() => setActiveTab("submissions")}
+                >
+                    History
+                </button>
+            </div>
+            
+             <div className="ml-auto flex items-center">
+                <Timer
+                    remainingSeconds={timer.remainingSeconds}
+                    status={timer.status}
+                    onStart={timer.start}
+                    onPause={timer.pause}
+                    onStop={timer.stop}
+                    onSetDuration={timer.setDuration}
+                />
+            </div>
         </div>
-        <div className="flex flex-col gap-4 rounded-md border border-border/80 bg-surface/40 p-6">
-          <ResponseInput
+
+        <div className="flex-1">
+          {activeTab === "question" ? (
+            <QuestionPane question={question} />
+          ) : user ? (
+            <SubmissionsTab responses={responses} />
+          ) : (
+            <div className="rounded-lg border border-white/5 bg-surface/30 p-8 text-center text-sm text-text-secondary">
+              Sign in to see your past attempts.
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Right Column: Input Area */}
+      <div className="flex flex-1 flex-col gap-4 border-t border-white/5 pt-6 md:border-l md:border-t-0 md:pl-6 md:pt-0">
+        <div className="flex items-center justify-between">
+             <span className="text-sm font-medium text-text-secondary">Your Response</span>
+             <div className="flex items-center gap-3">
+                <SpeechToggle
+                    supported={isSupported}
+                    isListening={isListening}
+                    onToggle={() =>
+                        isListening ? stopListening() : startListening()
+                    }
+                />
+                <span className="text-xs text-text-secondary">
+                    {isListening ? "Listening..." : "Dictate"}
+                </span>
+             </div>
+        </div>
+        
+        <ResponseInput
             value={responseText}
             onChange={setResponseText}
             disabled={isListening}
-          />
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <SpeechToggle
-              supported={isSupported}
-              isListening={isListening}
-              onToggle={() =>
-                isListening ? stopListening() : startListening()
-              }
-            />
-            <span className="text-[13px] text-text-secondary">
-              {isListening
-                ? "Listening... typing disabled"
-                : "Type or use the mic"}
-            </span>
-          </div>
+            isListening={isListening}
+        />
+
+        <div className="mt-auto flex justify-end pt-4">
+          <SubmitButton disabled={!responseText.trim()} onClick={handleSubmit} />
         </div>
       </div>
-      <div className="flex justify-end">
-        <SubmitButton disabled={!responseText.trim()} onClick={handleSubmit} />
-      </div>
+
       {showModal ? (
         <Modal
           title="Sign in to save progress"
@@ -251,7 +261,7 @@ export default function QuestionPage() {
           <p className="text-sm text-text-secondary">
             Sign in with Google to save your response and unlock AI feedback.
           </p>
-          <div className="mt-4">
+          <div className="mt-6 flex justify-end">
             <Button onClick={signInWithGoogle} size="sm">
               Sign in with Google
             </Button>
