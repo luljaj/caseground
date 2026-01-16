@@ -47,7 +47,7 @@ export default function AIFeedback({
   const showRetry = Boolean(error) && !feedback;
 
   return (
-    <div className="rounded-2xl border border-border bg-background/40 p-4">
+    <div className="rounded-md border border-border/80 bg-background/30 p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-text-primary">AI Feedback</h3>
         <span className="text-xs text-text-secondary">

@@ -115,7 +115,7 @@ export default function ResultsPage() {
 
   if (!user) {
     return (
-      <div className="rounded-2xl border border-border bg-surface/60 p-6 text-sm text-text-secondary">
+      <div className="rounded-md border border-border/80 bg-surface/40 p-6 text-sm text-text-secondary">
         Sign in to view your results.
       </div>
     );
@@ -123,7 +123,7 @@ export default function ResultsPage() {
 
   if (!question || !response || credits === null) {
     return (
-      <div className="rounded-2xl border border-border bg-surface/60 p-6 text-sm text-text-secondary">
+      <div className="rounded-md border border-border/80 bg-surface/40 p-6 text-sm text-text-secondary">
         No results found for this attempt yet.
       </div>
     );
@@ -133,12 +133,12 @@ export default function ResultsPage() {
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
-      <div className="rounded-2xl border border-border bg-surface/60 p-6">
+      <div className="rounded-md border border-border/80 bg-surface/40 p-6">
         <h1 className="text-2xl font-semibold text-text-primary">Your Response</h1>
         <p className="mt-3 text-sm text-text-secondary">{response.response}</p>
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-border bg-surface/60 p-6">
+        <div className="rounded-md border border-border/80 bg-surface/40 p-6">
           <h2 className="text-lg font-semibold text-text-primary">Rubric</h2>
           <div className="mt-4">
             <RubricChecklist items={rubricItems} />

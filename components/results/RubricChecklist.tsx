@@ -23,13 +23,13 @@ export default function RubricChecklist({ items }: { items: RubricItem[] }) {
       {items.map((item) => (
         <label
           key={item.id}
-          className="flex items-center gap-3 rounded-xl border border-border bg-background/40 px-3 py-2 text-sm text-text-secondary"
+          className="flex items-center gap-3 rounded-md border border-border/80 bg-background/30 px-3 py-2 text-sm text-text-secondary"
         >
           <input
             type="checkbox"
             checked={checked.has(item.id)}
             onChange={() => toggle(item.id)}
-            className="h-4 w-4 rounded border-border bg-background"
+            className="h-4 w-4 rounded-sm border-border bg-background"
           />
           <span>{item.text}</span>
         </label>

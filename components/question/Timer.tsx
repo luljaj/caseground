@@ -38,7 +38,7 @@ export default function Timer({
   };
 
   return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-surface/60 px-4 py-3">
+    <div className="flex flex-col items-center gap-3 rounded-md border border-border/80 bg-surface/40 px-4 py-3">
       <div
         className={`text-2xl font-semibold tracking-[0.2em] ${
           status === "finished" ? "animate-pulse text-error" : "text-text-primary"
@@ -46,13 +46,13 @@ export default function Timer({
       >
         {formatTime(remainingSeconds)}
       </div>
-      <div className="flex flex-wrap items-center gap-2 text-xs text-text-secondary">
+      <div className="flex flex-wrap items-center gap-2 text-[12px] text-text-secondary">
         <label className="flex items-center gap-2">
           <span>Edit time</span>
           <input
             type="number"
             min={1}
-            className="w-20 rounded-lg border border-border bg-background px-2 py-1 text-xs text-text-primary"
+            className="w-20 rounded-md border border-border bg-background px-2 py-1 text-[12px] text-text-primary transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             value={draftMinutes}
             onChange={(event) => setDraftMinutes(Number(event.target.value))}
             onBlur={handleApply}

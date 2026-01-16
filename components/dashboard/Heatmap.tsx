@@ -47,7 +47,7 @@ export default function Heatmap({ data }: { data: HeatmapDatum[] }) {
   };
 
   return (
-    <div className="rounded-2xl border border-border bg-surface/60 p-4">
+    <div className="rounded-md border border-border/80 bg-surface/40 p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-text-primary">Activity</h3>
         <span className="text-xs text-text-secondary">Past 52 weeks</span>
