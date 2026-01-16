@@ -4,7 +4,11 @@ import "./globals.css";
 import Nav from "@/components/layout/Nav";
 import AuthProvider from "@/components/layout/AuthProvider";
 
-const manrope = Manrope({ subsets: ["latin"], weight: ["400", "500", "600"] });
+const manrope = Manrope({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Caseground",

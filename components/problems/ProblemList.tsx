@@ -18,7 +18,7 @@ export default function ProblemList({
 
   return (
     <div className="overflow-hidden rounded-md border border-border/80 bg-surface/20">
-      <table className="w-full border-collapse text-left text-sm">
+      <table className="w-full border-collapse text-left text-sm leading-tight">
         <thead className="border-b border-border/60 bg-surface/50 text-[11px] font-medium uppercase tracking-[0.18em] text-text-secondary">
           <tr>
             <th className="px-6 py-3">#</th>
