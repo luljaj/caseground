@@ -5,5 +5,9 @@
       "Bash(findstr:*)",
       "Bash(if exist .next rmdir /s /q .next)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "shadcn"
+  ],
+  "enableAllProjectMcpServers": true
 }
