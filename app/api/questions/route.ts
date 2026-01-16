@@ -6,6 +6,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const track = searchParams.get("track");
   const category = searchParams.get("category");
+  const search = searchParams.get("search");
   const pageParam = Number(searchParams.get("page") ?? 1);
   const perPageParam = Number(searchParams.get("perPage") ?? 30);
   const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
   const sortField = searchParams.get("sort") ?? "number";
   const sortDirection = searchParams.get("direction") ?? "asc";
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   let query = supabase
     .from("questions")
     .select("*", { count: "exact" });
@@ -25,6 +26,10 @@ export async function GET(request: NextRequest) {
 
   if (category) {
     query = query.eq("category", category);
+  }
+
+  if (search) {
+    query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
   }
 
   const from = (page - 1) * perPage;

@@ -1,11 +1,19 @@
 import Link from "next/link";
 import type { Question } from "@/types";
-import { cn } from "@/lib/utils/cn";
 
-const trackLabels: Record<Question["track"], string> = {
-  estimations: "Estimations",
-  behaviorals: "Behaviorals",
-  reasoning: "Reasoning",
+const trackConfig: Record<Question["track"], { label: string; color: string }> = {
+  estimations: {
+    label: "Estimations",
+    color: "text-blue-400/70",
+  },
+  behaviorals: {
+    label: "Behaviorals",
+    color: "text-violet-400/70",
+  },
+  reasoning: {
+    label: "Reasoning",
+    color: "text-amber-400/70",
+  },
 };
 
 export default function ProblemRow({
@@ -18,18 +26,19 @@ export default function ProblemRow({
   const title = question.title || "Untitled";
 
   return (
-    <tr className="group border-b border-white/5 transition-colors hover:bg-white/[0.02]">
-      <td className="px-6 py-4 align-middle">
+    <tr className="group transition-colors duration-150 hover:bg-white/[0.02]">
+      {/* Status */}
+      <td className="px-4 pb-2.5 pt-3.5 align-middle">
         {isCompleted ? (
-          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-success/20 bg-success/10 text-success">
+          <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-success/15 text-success">
             <svg
-              viewBox="0 0 12 10"
+              viewBox="0 0 12 12"
               fill="none"
-              aria-hidden="true"
-              className="h-3 w-3"
+              aria-label="Completed"
+              className="h-2.5 w-2.5"
             >
               <path
-                d="M1 5L4.5 8.5L11 1.5"
+                d="M2.5 6L5 8.5L9.5 3.5"
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
@@ -38,31 +47,40 @@ export default function ProblemRow({
             </svg>
           </span>
         ) : (
-          <span className="inline-flex h-5 w-5" aria-hidden="true" />
+          <span
+            className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-white/[0.08]"
+            aria-hidden="true"
+          />
         )}
       </td>
-      <td className="px-6 py-4 align-middle">
-        <span className="text-xs font-medium text-text-secondary/60">
+
+      {/* Number */}
+      <td className="px-4 pb-3.5 pt-2.5 align-middle">
+        <span className="font-mono text-[12px] text-text-muted">
           {question.number}
         </span>
       </td>
-      <td className="px-6 py-4 align-middle">
+
+      {/* Title */}
+      <td className="px-4 py-3 align-middle">
         <Link
           href={`/problems/${question.id}`}
-          className="block"
+          className="block text-[13px] font-medium text-text-primary transition-colors duration-150 hover:text-white"
         >
-          <span className="block text-sm font-medium text-text-primary transition-all duration-200 group-hover:text-white group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-            {title}
-          </span>
+          {title}
         </Link>
       </td>
-      <td className="px-6 py-4 align-middle">
-         <span className="inline-flex items-center rounded border border-white/5 bg-white/5 px-2 py-0.5 text-[11px] text-text-secondary">
-          {trackLabels[question.track]}
+
+      {/* Track */}
+      <td className="hidden px-4 py-3 align-middle md:table-cell">
+        <span className={`text-[12px] ${trackConfig[question.track].color}`}>
+          {trackConfig[question.track].label}
         </span>
       </td>
-      <td className="px-6 py-4 align-middle">
-        <span className="inline-flex items-center rounded border border-white/5 bg-white/5 px-2 py-0.5 text-[11px] text-text-secondary">
+
+      {/* Category */}
+      <td className="hidden px-4 py-3 align-middle lg:table-cell">
+        <span className="text-[12px] text-text-muted">
           {question.category}
         </span>
       </td>

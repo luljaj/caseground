@@ -28,7 +28,7 @@ export default function DistortionGrid() {
     const MOUSE_RADIUS = 180;
     const REPULSION_STRENGTH = 1; // Adjusted for subtle effect
     const SPRING_STIFFNESS = 0.02;
-    const DAMPING = 0.3;
+    const DAMPING = 0.9;
     
     let animationFrameId: number;
     let width = 0;

@@ -46,10 +46,7 @@ const sortOptions = [
 
 type DropdownOption = { label: string; value: string };
 
-const dropdownTriggerStyles =
-  "flex h-9 w-[140px] items-center justify-between rounded-md border border-white/10 bg-surface px-3 py-2 text-sm text-text-primary shadow-sm transition-colors hover:border-white/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50";
-
-function DropdownSelect({
+function FilterDropdown({
   value,
   options,
   onValueChange,
@@ -73,21 +70,24 @@ function DropdownSelect({
         <button
           type="button"
           className={cn(
-            dropdownTriggerStyles,
-            disabled && "text-text-secondary/70"
+            "flex h-8 items-center gap-2 rounded-md border border-white/[0.06] bg-transparent px-3 text-[13px] text-text-primary transition-all duration-150",
+            "hover:border-white/[0.12] hover:bg-white/[0.02]",
+            "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20",
+            "disabled:cursor-not-allowed disabled:opacity-40",
+            disabled && "text-text-muted"
           )}
           disabled={disabled}
           aria-label={ariaLabel}
         >
           <span className="truncate">{selectedLabel}</span>
           <svg
-            className="ml-2 h-3 w-3 shrink-0 opacity-60"
-            viewBox="0 0 10 6"
+            className="h-3 w-3 shrink-0 text-text-muted"
+            viewBox="0 0 12 12"
             fill="none"
             aria-hidden="true"
           >
             <path
-              d="M1 1L5 5L9 1"
+              d="M3 4.5L6 7.5L9 4.5"
               stroke="currentColor"
               strokeWidth="1.5"
               strokeLinecap="round"
@@ -97,7 +97,7 @@ function DropdownSelect({
         </button>
       </DropdownMenuTrigger>
       {disabled ? null : (
-        <DropdownMenuContent align="start" className="min-w-[140px]">
+        <DropdownMenuContent align="start" className="min-w-[160px]">
           <DropdownMenuRadioGroup value={value} onValueChange={onValueChange}>
             {options.map((option) => (
               <DropdownMenuRadioItem key={option.value} value={option.value}>
@@ -111,22 +111,74 @@ function DropdownSelect({
   );
 }
 
+function SearchInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div className="relative">
+      <svg
+        className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted"
+        viewBox="0 0 16 16"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M7 12.5C10.0376 12.5 12.5 10.0376 12.5 7C12.5 3.96243 10.0376 1.5 7 1.5C3.96243 1.5 1.5 3.96243 1.5 7C1.5 10.0376 3.96243 12.5 7 12.5Z"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M14.5 14.5L11 11"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={cn(
+          "h-8 w-full rounded-md border border-white/[0.06] bg-transparent pl-9 pr-3 text-[13px] text-text-primary placeholder:text-text-muted",
+          "transition-all duration-150",
+          "hover:border-white/[0.12]",
+          "focus:border-white/[0.12] focus:outline-none focus:ring-1 focus:ring-white/10"
+        )}
+      />
+    </div>
+  );
+}
+
 export default function ProblemFilters({
   track,
   category,
+  search,
   notDone,
   sort,
   onTrackChange,
   onCategoryChange,
+  onSearchChange,
   onNotDoneChange,
   onSortChange,
 }: {
   track: Track | "all";
   category: Category | "all";
+  search: string;
   notDone: boolean;
   sort: SortParams;
   onTrackChange: (value: Track | "all") => void;
   onCategoryChange: (value: Category | "all") => void;
+  onSearchChange: (value: string) => void;
   onNotDoneChange: (value: boolean) => void;
   onSortChange: (value: SortParams) => void;
 }) {
@@ -137,24 +189,60 @@ export default function ProblemFilters({
   const sortValue = `${sort.field}:${sort.direction}`;
   const isCategoryDisabled = track === "all";
 
-  const tracks: Array<{ label: string; value: Track }> = [
-    { label: "Estimations", value: "estimations" },
-    { label: "Behaviorals", value: "behaviorals" },
-    { label: "Reasoning", value: "reasoning" },
+  const tracks: Array<{ label: string; value: Track; color: string; underline: string }> = [
+    { label: "Estimations", value: "estimations", color: "text-blue-400/70", underline: "bg-blue-400/70" },
+    { label: "Behaviorals", value: "behaviorals", color: "text-violet-400/70", underline: "bg-violet-400/70" },
+    { label: "Reasoning", value: "reasoning", color: "text-amber-400/70", underline: "bg-amber-400/70" },
   ];
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-1 flex-wrap gap-2">
-          <DropdownSelect
-            value={track}
-            options={trackOptions}
-            onValueChange={(value) => onTrackChange(value as Track | "all")}
-            placeholder="All Tracks"
-            ariaLabel="Track"
-          />
-          <DropdownSelect
+      {/* Track Tabs */}
+      <div className="flex items-center gap-1 border-b border-white/[0.06]">
+        <button
+          onClick={() => onTrackChange("all")}
+          className={cn(
+            "relative px-3 py-2 text-[13px] font-medium transition-colors duration-150",
+            track === "all"
+              ? "text-text-primary"
+              : "text-text-muted hover:text-text-secondary"
+          )}
+        >
+          All
+          {track === "all" && (
+            <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-text-primary" />
+          )}
+        </button>
+        {tracks.map((t) => (
+          <button
+            key={t.value}
+            onClick={() => onTrackChange(t.value)}
+            className={cn(
+              "relative px-3 py-2 text-[13px] font-medium transition-colors duration-150",
+              track === t.value
+                ? t.color
+                : "text-text-muted hover:text-text-secondary"
+            )}
+          >
+            {t.label}
+            {track === t.value && (
+              <span className={`absolute bottom-0 left-0 right-0 h-[2px] ${t.underline}`} />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Filters Row */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 flex-wrap items-center gap-2">
+          <div className="w-full sm:w-56">
+            <SearchInput
+              value={search}
+              onChange={onSearchChange}
+              placeholder="Search questions..."
+            />
+          </div>
+          <FilterDropdown
             value={category}
             options={categories}
             onValueChange={(value) =>
@@ -164,7 +252,7 @@ export default function ProblemFilters({
             disabled={isCategoryDisabled}
             ariaLabel="Category"
           />
-          <DropdownSelect
+          <FilterDropdown
             value={sortValue}
             options={sortOptions}
             onValueChange={(value) => {
@@ -178,48 +266,15 @@ export default function ProblemFilters({
             ariaLabel="Sort"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <Checkbox 
+
+        <label className="flex cursor-pointer select-none items-center gap-2 text-[13px] text-text-secondary transition-colors hover:text-text-primary">
+          <Checkbox
             id="hide-completed"
             checked={notDone}
             onChange={(event) => onNotDoneChange(event.target.checked)}
           />
-          <label htmlFor="hide-completed" className="text-sm text-text-secondary select-none cursor-pointer">
-            Hide completed
-          </label>
-        </div>
-      </div>
-      
-      {/* Track Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
-         <span className="text-[11px] font-medium uppercase tracking-wider text-text-secondary/60 mr-2">
-            Tracks
-         </span>
-         <button
-            onClick={() => onTrackChange("all")}
-            className={cn(
-                "rounded-full border px-3 py-1 text-xs font-medium transition-colors whitespace-nowrap",
-                track === "all"
-                    ? "border-white/20 bg-white/10 text-white"
-                    : "border-transparent bg-transparent text-text-secondary hover:text-text-primary hover:bg-white/5"
-            )}
-         >
-            All
-         </button>
-         {tracks.map((t) => (
-            <button
-                key={t.value}
-                onClick={() => onTrackChange(t.value)}
-                className={cn(
-                    "rounded-full border px-3 py-1 text-xs font-medium transition-colors whitespace-nowrap",
-                    track === t.value
-                        ? "border-white/20 bg-white/10 text-white"
-                        : "border-transparent bg-transparent text-text-secondary hover:text-text-primary hover:bg-white/5"
-                )}
-            >
-                {t.label}
-            </button>
-         ))}
+          <span>Hide completed</span>
+        </label>
       </div>
     </div>
   );

@@ -5,21 +5,33 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-manrope)"],
-        inter: ["var(--font-inter)"],
+        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
       },
       colors: {
         background: "var(--background)",
-        surface: "var(--surface)",
-        border: "var(--border)",
+        surface: {
+          DEFAULT: "var(--surface)",
+          hover: "var(--surface-hover)",
+        },
+        border: {
+          DEFAULT: "var(--border)",
+          hover: "var(--border-hover)",
+        },
         text: {
           primary: "var(--text-primary)",
           secondary: "var(--text-secondary)",
+          muted: "var(--text-muted)",
         },
-        accent: "var(--accent)",
+        accent: {
+          DEFAULT: "var(--accent)",
+          muted: "var(--accent-muted)",
+        },
         success: "var(--success)",
         warning: "var(--warning)",
         error: "var(--error)",
+      },
+      transitionTimingFunction: {
+        smooth: "cubic-bezier(0.4, 0, 0.2, 1)",
       },
     },
   },

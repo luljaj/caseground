@@ -10,10 +10,10 @@ import SubmissionsTab from "@/components/question/SubmissionsTab";
 import ResponseInput from "@/components/question/ResponseInput";
 import SpeechToggle from "@/components/question/SpeechToggle";
 import Timer from "@/components/question/Timer";
-import SubmitButton from "@/components/question/SubmitButton";
 import Modal from "@/components/ui/Modal";
 import Spinner from "@/components/ui/Spinner";
 import Button from "@/components/ui/Button";
+import { cn } from "@/lib/utils/cn";
 import type { Question, UserResponse } from "@/types";
 
 export default function QuestionPage() {
@@ -26,11 +26,10 @@ export default function QuestionPage() {
   const [loading, setLoading] = useState(true);
   const [responses, setResponses] = useState<UserResponse[]>([]);
   const [responseText, setResponseText] = useState("");
-  const [activeTab, setActiveTab] = useState<"question" | "submissions">(
-    "question"
-  );
+  const [activeTab, setActiveTab] = useState<"question" | "submissions">("question");
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const timer = useTimer(question ? question.suggested_time * 60 : 300);
   const {
@@ -43,9 +42,7 @@ export default function QuestionPage() {
   } = useSpeechToText();
 
   useEffect(() => {
-    if (!id) {
-      return;
-    }
+    if (!id) return;
 
     let isMounted = true;
 
@@ -64,7 +61,7 @@ export default function QuestionPage() {
           setQuestion(payload.question ?? null);
           setLoading(false);
         }
-      } catch (_error) {
+      } catch {
         if (isMounted) {
           setError("Unable to load this question.");
           setLoading(false);
@@ -90,14 +87,12 @@ export default function QuestionPage() {
     async function loadResponses() {
       try {
         const response = await fetch(`/api/responses?question_id=${id}`);
-        if (!response.ok) {
-          return;
-        }
+        if (!response.ok) return;
         const payload = await response.json();
         if (isMounted) {
           setResponses(payload.responses ?? []);
         }
-      } catch (_error) {
+      } catch {
         return;
       }
     }
@@ -110,17 +105,13 @@ export default function QuestionPage() {
   }, [user, id]);
 
   useEffect(() => {
-    if (!transcript) {
-      return;
-    }
+    if (!transcript) return;
     setResponseText((prev) => (prev ? `${prev} ${transcript}` : transcript));
     clearTranscript();
   }, [transcript, clearTranscript]);
 
   const handleSubmit = async () => {
-    if (!responseText.trim() || !question) {
-      return;
-    }
+    if (!responseText.trim() || !question || isSubmitting) return;
 
     if (!user) {
       setShowModal(true);
@@ -128,6 +119,7 @@ export default function QuestionPage() {
     }
 
     try {
+      setIsSubmitting(true);
       const response = await fetch("/api/responses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -145,22 +137,24 @@ export default function QuestionPage() {
 
       const payload = await response.json();
       router.push(`/problems/${question.id}/results?response_id=${payload.id}`);
-    } catch (_error) {
+    } catch {
       setError("Failed to save your response.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center py-20">
-        <Spinner size={32} />
+      <div className="flex justify-center py-24">
+        <Spinner size={24} />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="mx-auto max-w-2xl rounded-lg border border-error/20 bg-error/5 p-4 text-sm text-error">
+      <div className="mx-auto max-w-lg rounded-md border border-error/20 bg-error/5 px-4 py-3 text-[13px] text-error">
         {error}
       </div>
     );
@@ -170,96 +164,109 @@ export default function QuestionPage() {
     return null;
   }
 
+  const tabs = [
+    { id: "question" as const, label: "Problem" },
+    { id: "submissions" as const, label: "History" },
+  ];
+
   return (
-    <div className="mx-auto flex h-[calc(100vh-100px)] max-w-[1400px] flex-col gap-6 px-4 pb-6 md:flex-row md:px-8">
+    <div className="mx-auto flex h-[calc(100vh-100px)] max-w-6xl flex-col gap-0 overflow-hidden rounded-lg border border-white/[0.08] bg-white/[0.02] lg:flex-row">
       {/* Left Column: Question Content */}
-      <div className="flex flex-1 flex-col gap-6 overflow-y-auto pr-2 md:max-w-[50%]">
-        <div className="flex items-center gap-6 border-b border-white/5 pb-2">
-            <div className="flex gap-4">
-                <button
-                    className={`pb-2 text-sm font-medium transition-colors ${
-                    activeTab === "question"
-                        ? "border-b border-accent text-text-primary"
-                        : "text-text-secondary hover:text-text-primary"
-                    }`}
-                    onClick={() => setActiveTab("question")}
-                >
-                    Problem
-                </button>
-                <button
-                    className={`pb-2 text-sm font-medium transition-colors ${
-                    activeTab === "submissions"
-                        ? "border-b border-accent text-text-primary"
-                        : "text-text-secondary hover:text-text-primary"
-                    }`}
-                    onClick={() => setActiveTab("submissions")}
-                >
-                    History
-                </button>
-            </div>
-            
-             <div className="ml-auto flex items-center">
-                <Timer
-                    remainingSeconds={timer.remainingSeconds}
-                    status={timer.status}
-                    onStart={timer.start}
-                    onPause={timer.pause}
-                    onStop={timer.stop}
-                    onSetDuration={timer.setDuration}
-                />
-            </div>
+      <div className="flex flex-1 flex-col overflow-hidden lg:max-w-[50%]">
+        {/* Header with tabs and timer */}
+        <div className="flex items-center justify-between border-b border-white/[0.06] bg-white/[0.02] px-4">
+          <div className="flex items-center">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "relative px-3 py-3 text-[13px] font-medium transition-colors duration-150",
+                  activeTab === tab.id
+                    ? "text-text-primary"
+                    : "text-text-muted hover:text-text-secondary"
+                )}
+              >
+                {tab.label}
+                {activeTab === tab.id && (
+                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-text-primary" />
+                )}
+              </button>
+            ))}
+          </div>
+
+          <Timer
+            remainingSeconds={timer.remainingSeconds}
+            status={timer.status}
+            onStart={timer.start}
+            onPause={timer.pause}
+            onStop={timer.stop}
+            onSetDuration={timer.setDuration}
+          />
         </div>
 
-        <div className="flex-1">
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-5 py-6">
           {activeTab === "question" ? (
             <QuestionPane question={question} />
           ) : user ? (
             <SubmissionsTab responses={responses} />
           ) : (
-            <div className="rounded-lg border border-white/5 bg-surface/30 p-8 text-center text-sm text-text-secondary">
-              Sign in to see your past attempts.
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-[13px] text-text-secondary">
+                Sign in to see your past attempts.
+              </p>
             </div>
           )}
         </div>
       </div>
 
       {/* Right Column: Input Area */}
-      <div className="flex flex-1 flex-col gap-4 border-t border-white/5 pt-6 md:border-l md:border-t-0 md:pl-6 md:pt-0">
-        <div className="flex items-center justify-between">
-             <span className="text-sm font-medium text-text-secondary">Your Response</span>
-             <div className="flex items-center gap-3">
-                <SpeechToggle
-                    supported={isSupported}
-                    isListening={isListening}
-                    onToggle={() =>
-                        isListening ? stopListening() : startListening()
-                    }
-                />
-                <span className="text-xs text-text-secondary">
-                    {isListening ? "Listening..." : "Dictate"}
-                </span>
-             </div>
+      <div className="flex flex-1 flex-col border-t border-white/[0.06] bg-white/[0.01] p-5 lg:border-l lg:border-t-0">
+        {/* Response header */}
+        <div className="flex items-center justify-between pb-4">
+          <span className="text-[13px] font-medium text-text-secondary">Response</span>
+          <SpeechToggle
+            supported={isSupported}
+            isListening={isListening}
+            onToggle={() => (isListening ? stopListening() : startListening())}
+          />
         </div>
-        
-        <ResponseInput
+
+        {/* Textarea */}
+        <div className="flex-1">
+          <ResponseInput
             value={responseText}
             onChange={setResponseText}
             disabled={isListening}
             isListening={isListening}
-        />
+          />
+        </div>
 
-        <div className="mt-auto flex justify-end pt-4">
-          <SubmitButton disabled={!responseText.trim()} onClick={handleSubmit} />
+        {/* Submit */}
+        <div className="flex items-center justify-between pt-4">
+          <span className="text-[12px] text-text-muted">
+            {responseText.length > 0 && `${responseText.split(/\s+/).filter(Boolean).length} words`}
+          </span>
+          <button
+            disabled={!responseText.trim() || isSubmitting}
+            onClick={handleSubmit}
+            className={cn(
+              "rounded-md px-4 py-2 text-[13px] font-medium transition-all duration-150",
+              responseText.trim() && !isSubmitting
+                ? "bg-text-primary text-background hover:bg-white"
+                : "cursor-not-allowed bg-white/[0.06] text-text-muted"
+            )}
+          >
+            {isSubmitting ? "Submitting..." : "Submit"}
+          </button>
         </div>
       </div>
 
-      {showModal ? (
-        <Modal
-          title="Sign in to save progress"
-          onClose={() => setShowModal(false)}
-        >
-          <p className="text-sm text-text-secondary">
-            Sign in with Google to save your response and unlock AI feedback.
+      {showModal && (
+        <Modal title="Sign in to continue" onClose={() => setShowModal(false)}>
+          <p className="text-[13px] text-text-secondary">
+            Sign in with Google to save your response and get AI feedback.
           </p>
           <div className="mt-6 flex justify-end">
             <Button onClick={signInWithGoogle} size="sm">
@@ -267,7 +274,7 @@ export default function QuestionPage() {
             </Button>
           </div>
         </Modal>
-      ) : null}
+      )}
     </div>
   );
 }

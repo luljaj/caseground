@@ -6,6 +6,7 @@ import type { Category, Question, SortParams, Track } from "@/types";
 type UseQuestionsParams = {
   track?: Track;
   category?: Category;
+  search?: string;
   page: number;
   perPage: number;
   sort: SortParams;
@@ -14,6 +15,7 @@ type UseQuestionsParams = {
 export function useQuestions({
   track,
   category,
+  search,
   page,
   perPage,
   sort,
@@ -37,6 +39,9 @@ export function useQuestions({
         }
         if (category) {
           params.set("category", category);
+        }
+        if (search) {
+          params.set("search", search);
         }
         params.set("page", String(page));
         params.set("perPage", String(perPage));
@@ -69,7 +74,7 @@ export function useQuestions({
     fetchQuestions();
 
     return () => controller.abort();
-  }, [track, category, page, perPage, sort.field, sort.direction]);
+  }, [track, category, search, page, perPage, sort.field, sort.direction]);
 
   return {
     questions,

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { formatTime } from "@/lib/utils/formatTime";
 import type { TimerStatus } from "@/lib/hooks/useTimer";
-import Button from "@/components/ui/Button";
+import { cn } from "@/lib/utils/cn";
 
 export default function Timer({
   remainingSeconds,
@@ -23,7 +23,6 @@ export default function Timer({
   const [draftMinutes, setDraftMinutes] = useState(
     Math.max(1, Math.round(remainingSeconds / 60))
   );
-
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
@@ -41,48 +40,71 @@ export default function Timer({
   };
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="relative group">
-         {isEditing ? (
-            <div className="flex items-center gap-2 h-[48px]">
-               <input
-                type="number"
-                min={1}
-                className="w-16 rounded border border-white/10 bg-transparent px-2 py-1 text-2xl font-mono text-center text-text-primary focus:outline-none focus:border-white/30"
-                value={draftMinutes}
-                onChange={(e) => setDraftMinutes(Number(e.target.value))}
-                onKeyDown={(e) => e.key === "Enter" && handleApply()}
-                autoFocus
-              />
-              <span className="text-sm text-text-secondary">min</span>
-              <button onClick={handleApply} className="text-xs text-accent hover:text-accent/80 ml-2">Save</button>
-            </div>
-         ) : (
-            <div 
-                onClick={() => status === "idle" && setIsEditing(true)}
-                className={`text-4xl font-mono font-medium tracking-tight cursor-pointer select-none transition-colors ${
-                    status === "finished" ? "text-error animate-pulse" : "text-text-primary hover:text-text-primary/80"
-                }`}
-                title="Click to edit duration"
-            >
-                {formatTime(remainingSeconds)}
-            </div>
-         )}
-      </div>
-      
-      <div className="flex items-center gap-2">
+    <div className="flex items-center gap-3">
+      {/* Time display */}
+      {isEditing ? (
+        <div className="flex items-center gap-1.5">
+          <input
+            type="number"
+            min={1}
+            className="w-12 rounded border border-white/[0.1] bg-transparent px-1.5 py-0.5 text-center font-mono text-[13px] text-text-primary focus:border-white/20 focus:outline-none"
+            value={draftMinutes}
+            onChange={(e) => setDraftMinutes(Number(e.target.value))}
+            onKeyDown={(e) => e.key === "Enter" && handleApply()}
+            onBlur={handleApply}
+            autoFocus
+          />
+          <span className="text-[12px] text-text-muted">min</span>
+        </div>
+      ) : (
+        <button
+          onClick={() => status === "idle" && setIsEditing(true)}
+          className={cn(
+            "font-mono text-lg font-medium tracking-tight transition-colors duration-150",
+            status === "idle" && "cursor-pointer hover:text-text-secondary",
+            status === "finished" && "text-error",
+            status === "running" && "text-text-primary",
+            status === "paused" && "text-text-secondary"
+          )}
+          title={status === "idle" ? "Click to edit" : undefined}
+        >
+          {formatTime(remainingSeconds)}
+        </button>
+      )}
+
+      {/* Controls */}
+      <div className="flex items-center gap-1">
         {status === "running" ? (
-          <Button size="sm" variant="secondary" onClick={onPause} className="h-7 px-3 text-xs border-white/10">
-            Pause
-          </Button>
+          <button
+            onClick={onPause}
+            className="rounded p-1.5 text-text-muted transition-colors hover:bg-white/[0.04] hover:text-text-secondary"
+            aria-label="Pause"
+          >
+            <svg className="h-3.5 w-3.5" viewBox="0 0 14 14" fill="currentColor">
+              <rect x="3" y="2" width="3" height="10" rx="0.5" />
+              <rect x="8" y="2" width="3" height="10" rx="0.5" />
+            </svg>
+          </button>
         ) : (
-          <Button size="sm" variant="secondary" onClick={onStart} className="h-7 px-3 text-xs border-white/10">
-            Start
-          </Button>
+          <button
+            onClick={onStart}
+            className="rounded p-1.5 text-text-muted transition-colors hover:bg-white/[0.04] hover:text-text-secondary"
+            aria-label="Start"
+          >
+            <svg className="h-3.5 w-3.5" viewBox="0 0 14 14" fill="currentColor">
+              <path d="M3 2.5a.5.5 0 0 1 .764-.424l8 5a.5.5 0 0 1 0 .848l-8 5A.5.5 0 0 1 3 12.5v-10z" />
+            </svg>
+          </button>
         )}
-        <Button size="sm" variant="ghost" onClick={onStop} className="h-7 px-3 text-xs text-text-secondary hover:text-text-primary">
-            Reset
-        </Button>
+        <button
+          onClick={onStop}
+          className="rounded p-1.5 text-text-muted transition-colors hover:bg-white/[0.04] hover:text-text-secondary"
+          aria-label="Reset"
+        >
+          <svg className="h-3.5 w-3.5" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M2 7a5 5 0 1 1 1.5 3.5M2 11V7h4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
       </div>
     </div>
   );
