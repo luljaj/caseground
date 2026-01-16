@@ -8,12 +8,12 @@ export default function StatsCard({
   hint?: string;
 }) {
   return (
-    <div className="rounded-md border border-border/80 bg-surface/40 p-4">
-      <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-text-secondary">
+    <div className="rounded-md border border-border bg-surface/40 p-5">
+      <p className="text-sm font-medium text-text-secondary">
         {label}
       </p>
-      <p className="mt-3 text-2xl font-semibold text-text-primary">{value}</p>
-      {hint ? <p className="mt-2 text-xs text-text-secondary">{hint}</p> : null}
+      <p className="mt-2 text-3xl font-semibold tracking-tight text-text-primary">{value}</p>
+      {hint ? <p className="mt-1 text-[13px] text-text-secondary/80">{hint}</p> : null}
     </div>
   );
 }

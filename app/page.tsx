@@ -2,59 +2,59 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <section className="relative overflow-hidden rounded-md border border-border/80 bg-surface/40 px-6 py-12 md:px-12">
-      <div className="absolute inset-0 bg-atmosphere opacity-60" />
-      <div className="relative z-10 mx-auto flex max-w-5xl flex-col gap-10">
+    <section className="relative overflow-hidden px-6 py-12 md:px-12 md:py-20">
+      <div className="absolute inset-0 bg-atmosphere pointer-events-none" />
+      
+      <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center text-center gap-10">
         <div className="animate-fade-up">
-          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-text-secondary">
-            Business interview practice
-          </p>
-          <h1 className="mt-4 text-4xl font-semibold leading-tight md:text-5xl">
-            Train the skills that case interviews and business prompts demand.
+          <h1 className="text-[40px] font-semibold tracking-tight leading-[1.1] md:text-[56px] text-white">
+            Master the business interview.
           </h1>
-          <p className="mt-4 max-w-2xl text-base text-text-secondary">
-            Run timed drills, speak or type your response, then compare against a
-            rubric and strong sample answers. Build confidence across
-            estimations, behaviorals, and reasoning puzzles.
+          <p className="mt-6 max-w-2xl mx-auto text-[17px] leading-relaxed text-text-secondary">
+            Practice estimations, behaviorals, and reasoning puzzles with calibrated timers 
+            and AI feedback. Built for high-performance candidates.
           </p>
-          <div className="mt-6 flex flex-wrap items-center gap-3">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/problems"
-              className="rounded-md border border-accent bg-accent px-5 py-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+              className="rounded h-10 px-6 flex items-center text-sm font-medium bg-white text-black hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
             >
               Start practicing
             </Link>
             <Link
               href="/dashboard"
-              className="rounded-md border border-border bg-surface px-5 py-2.5 text-sm font-medium text-text-primary transition-colors duration-150 hover:border-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+              className="rounded h-10 px-6 flex items-center text-sm font-medium border border-border bg-transparent text-text-primary hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border"
             >
-              View dashboard
+              Dashboard
             </Link>
           </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
+
+        <div className="mt-16 grid w-full gap-6 md:grid-cols-3 text-left">
           {[
             {
               title: "Estimations",
-              copy: "Market sizing, cost, and volume drills with calibrated timing.",
+              copy: "Market sizing and volume drills.",
             },
             {
               title: "Behaviorals",
-              copy: "Structured prompts that sharpen leadership and judgment stories.",
+              copy: "Refine your leadership stories.",
             },
             {
               title: "Reasoning",
-              copy: "Logic puzzles to test structure, clarity, and communication.",
+              copy: "Logic puzzles for clarity.",
             },
           ].map((card) => (
             <div
               key={card.title}
-              className="rounded-md border border-border/70 bg-surface/30 p-4"
+              className="group rounded-lg border border-border bg-surface/50 p-6 hover:border-white/10 hover:bg-surface transition-all duration-200"
             >
-              <h3 className="text-base font-semibold text-text-primary">
+              <h3 className="text-[15px] font-medium text-text-primary">
                 {card.title}
               </h3>
-              <p className="mt-2 text-sm text-text-secondary">{card.copy}</p>
+              <p className="mt-1 text-[14px] text-text-secondary group-hover:text-text-secondary/80">
+                {card.copy}
+              </p>
             </div>
           ))}
         </div>
