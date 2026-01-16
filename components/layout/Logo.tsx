@@ -4,9 +4,9 @@ export default function Logo() {
   return (
     <Link
       href="/"
-      className="group flex items-center gap-3 text-lg font-semibold tracking-tight"
+      className="group flex items-center gap-3 text-base font-semibold tracking-tight"
     >
-      <span className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-xs font-bold text-accent">
+      <span className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-surface text-[11px] font-semibold text-accent">
         CG
       </span>
       <span className="text-text-primary">Caseground</span>
