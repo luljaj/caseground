@@ -32,7 +32,7 @@ export default function Pagination({
             pageNumber == page
               ? "border-accent bg-accent/15 text-text-primary"
               : "border-border text-text-secondary hover:border-accent/40 hover:text-text-primary"
-          }`}
+          } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40`}
           onClick={() => onPageChange(pageNumber)}
         >
           {pageNumber}

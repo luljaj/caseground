@@ -29,7 +29,7 @@ export default function RubricChecklist({ items }: { items: RubricItem[] }) {
             type="checkbox"
             checked={checked.has(item.id)}
             onChange={() => toggle(item.id)}
-            className="h-4 w-4 rounded-sm border-border bg-background"
+            className="h-4 w-4 rounded-sm border-border bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           />
           <span>{item.text}</span>
         </label>

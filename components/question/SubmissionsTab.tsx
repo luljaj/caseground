@@ -26,7 +26,7 @@ export default function SubmissionsTab({
               {response.time_taken ? `${response.time_taken}s` : "No timer"}
             </span>
           </div>
-          <p className="mt-3 text-sm text-text-primary">
+          <p className="mt-3 text-sm leading-relaxed text-text-primary">
             {response.response.length > 160
               ? `${response.response.slice(0, 160)}...`
               : response.response}

@@ -54,7 +54,7 @@ export default function AIFeedback({
           {credits} credits left
         </span>
       </div>
-      <div className="mt-3 text-sm text-text-secondary">
+      <div className="mt-3 text-sm leading-relaxed text-text-secondary">
         {feedback ? (
           <p>{feedback}</p>
         ) : (

@@ -10,13 +10,13 @@ export default function Nav() {
           <Logo />
           <div className="hidden gap-6 text-[13px] text-text-secondary md:flex">
             <Link
-              className="transition-colors duration-150 hover:text-text-primary"
+              className="transition-colors duration-150 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
               href="/problems"
             >
               Problems
             </Link>
             <Link
-              className="transition-colors duration-150 hover:text-text-primary"
+              className="transition-colors duration-150 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
               href="/dashboard"
             >
               Dashboard
@@ -25,7 +25,7 @@ export default function Nav() {
         </div>
         <div className="flex items-center gap-4">
           <Link
-            className="text-[13px] text-text-secondary transition-colors duration-150 hover:text-text-primary md:hidden"
+            className="text-[13px] text-text-secondary transition-colors duration-150 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 md:hidden"
             href="/problems"
           >
             Problems

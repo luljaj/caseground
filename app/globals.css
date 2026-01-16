@@ -29,6 +29,8 @@ body {
     radial-gradient(circle at 15% 20%, rgba(88, 101, 255, 0.08), transparent 45%),
     radial-gradient(circle at 85% 10%, rgba(148, 163, 184, 0.08), transparent 50%);
   color: var(--text-primary);
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 a {

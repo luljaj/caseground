@@ -135,7 +135,9 @@ export default function ResultsPage() {
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <div className="rounded-md border border-border/80 bg-surface/40 p-6">
         <h1 className="text-2xl font-semibold text-text-primary">Your Response</h1>
-        <p className="mt-3 text-sm text-text-secondary">{response.response}</p>
+        <p className="mt-3 text-sm leading-relaxed text-text-secondary">
+          {response.response}
+        </p>
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-md border border-border/80 bg-surface/40 p-6">
@@ -159,7 +161,10 @@ export default function ResultsPage() {
             Try Again
           </Button>
         </Link>
-        <Link href="/problems" className="text-[13px] text-text-secondary">
+        <Link
+          href="/problems"
+          className="text-[13px] text-text-secondary transition-colors duration-150 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+        >
           Back to Problems
         </Link>
       </div>

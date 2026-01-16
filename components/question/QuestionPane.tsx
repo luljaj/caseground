@@ -27,8 +27,10 @@ export default function QuestionPane({ question }: { question: Question }) {
         <h2 className="mt-2 text-lg font-semibold text-text-primary">
           {question.title}
         </h2>
-        <p className="mt-3 text-sm text-text-secondary">{question.prompt}</p>
-        <p className="mt-3 text-sm text-text-secondary">
+        <p className="mt-3 text-sm leading-relaxed text-text-secondary">
+          {question.prompt}
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-text-secondary">
           {question.description}
         </p>
       </div>

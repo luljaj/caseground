@@ -190,7 +190,7 @@ export default function QuestionPage() {
                 activeTab === "question"
                   ? "bg-accent/15 text-text-primary"
                   : "text-text-secondary hover:text-text-primary"
-              }`}
+              } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40`}
               onClick={() => setActiveTab("question")}
             >
               Question
@@ -200,7 +200,7 @@ export default function QuestionPage() {
                 activeTab === "submissions"
                   ? "bg-accent/15 text-text-primary"
                   : "text-text-secondary hover:text-text-primary"
-              }`}
+              } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40`}
               onClick={() => setActiveTab("submissions")}
             >
               Submissions

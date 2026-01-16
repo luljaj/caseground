@@ -30,7 +30,7 @@ export default function ProblemRow({
       <td className="px-6 py-4">
         <Link
           href={`/problems/${question.id}`}
-          className="text-text-primary transition-colors duration-150 hover:text-accent"
+          className="text-text-primary transition-colors duration-150 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-0"
         >
           <span className="block text-sm font-semibold text-text-primary">
             {title}

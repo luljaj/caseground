@@ -53,7 +53,7 @@ export default function ProblemFilters({
       : [{ label: "All Categories", value: "all" as const }, ...categoryOptions[track]];
 
   return (
-    <div className="flex flex-col gap-4 rounded-md border border-border/80 bg-surface/60 p-4 md:flex-row md:items-center md:justify-between">
+    <div className="flex flex-col gap-4 rounded-md border border-border/80 bg-surface/40 p-4 md:flex-row md:items-center md:justify-between">
       <div className="flex flex-1 flex-col gap-3 md:flex-row">
         <label className="flex flex-col gap-1 text-[11px] font-medium uppercase tracking-[0.18em] text-text-secondary">
           Track
@@ -114,7 +114,7 @@ export default function ProblemFilters({
       <label className="flex items-center gap-2 text-[13px] text-text-secondary">
         <input
           type="checkbox"
-          className="h-4 w-4 rounded-sm border-border bg-background"
+          className="h-4 w-4 rounded-sm border-border bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           checked={notDone}
           onChange={(event) => onNotDoneChange(event.target.checked)}
         />
