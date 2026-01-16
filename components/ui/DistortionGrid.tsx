@@ -11,25 +11,46 @@ interface Point {
   vy: number;
 }
 
+interface TrailPoint {
+  x: number;
+  y: number;
+  timestamp: number;
+  strength: number;
+}
+
 export default function DistortionGrid() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const mouseRef = useRef({ x: -1000, y: -1000 });
   const pointsRef = useRef<Point[]>([]);
+  const trailRef = useRef<TrailPoint[]>([]);
+  const lastTrailSampleRef = useRef(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    const isMobile =
+      "ontouchstart" in window ||
+      window.matchMedia("(max-width: 768px)").matches ||
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      );
+
+    if (isMobile) return;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     // Configuration
     const GRID_SPACING = 50;
-    const MOUSE_RADIUS = 180;
-    const REPULSION_STRENGTH = 1; // Adjusted for subtle effect
+    const MOUSE_RADIUS = 160;
+    const REPULSION_STRENGTH = 0.05;
     const SPRING_STIFFNESS = 0.02;
-    const DAMPING = 0.9;
-    
+    const DAMPING = 0.92;
+    const TRAIL_LIFETIME = 2000;
+    const TRAIL_SAMPLE_RATE = 16;
+    const MAX_TRAIL_POINTS = Math.ceil(TRAIL_LIFETIME / TRAIL_SAMPLE_RATE);
+    const TRAIL_MIN_STRENGTH = 0.01;
+
     let animationFrameId: number;
     let width = 0;
     let height = 0;
@@ -41,6 +62,7 @@ export default function DistortionGrid() {
       height = window.innerHeight;
       canvas.width = width;
       canvas.height = height;
+      trailRef.current = [];
 
       cols = Math.ceil(width / GRID_SPACING) + 1;
       rows = Math.ceil(height / GRID_SPACING) + 1;
@@ -63,26 +85,56 @@ export default function DistortionGrid() {
       pointsRef.current = points;
     };
 
-    const updatePoints = () => {
-      const mouse = mouseRef.current;
-      
-      pointsRef.current.forEach((point) => {
-        // Distance from mouse to point's ORIGIN (stable interaction)
-        const dx = point.x - mouse.x;
-        const dy = point.y - mouse.y;
-        const distanceSq = dx * dx + dy * dy;
-        const distance = Math.sqrt(distanceSq);
+    const updateTrail = (mouseX: number, mouseY: number, now: number) => {
+      trailRef.current.push({
+        x: mouseX,
+        y: mouseY,
+        timestamp: now,
+        strength: 1,
+      });
 
+      if (trailRef.current.length > MAX_TRAIL_POINTS) {
+        trailRef.current.shift();
+      }
+    };
+
+    const updateTrailStrengths = (now: number) => {
+      const trail = trailRef.current;
+      for (let i = trail.length - 1; i >= 0; i--) {
+        const age = now - trail[i].timestamp;
+        const strength = 1 - age / TRAIL_LIFETIME;
+        if (strength <= TRAIL_MIN_STRENGTH) {
+          trail.splice(i, 1);
+        } else {
+          trail[i].strength = strength;
+        }
+      }
+    };
+
+    const updatePoints = () => {
+      const now = performance.now();
+      updateTrailStrengths(now);
+
+      pointsRef.current.forEach((point) => {
         let forceX = 0;
         let forceY = 0;
 
-        // Mouse Repulsion
-        if (distance < MOUSE_RADIUS) {
-          const force = (1 - distance / MOUSE_RADIUS) * REPULSION_STRENGTH;
+        // Apply wake forces from the trail
+        trailRef.current.forEach((trailPoint) => {
+          const dx = point.x - trailPoint.x;
+          const dy = point.y - trailPoint.y;
+          const distanceSq = dx * dx + dy * dy;
+          if (distanceSq > MOUSE_RADIUS * MOUSE_RADIUS) return;
+
+          const distance = Math.sqrt(distanceSq);
+          const force =
+            (1 - distance / MOUSE_RADIUS) *
+            REPULSION_STRENGTH *
+            trailPoint.strength;
           const angle = Math.atan2(dy, dx);
-          forceX += Math.cos(angle) * force * 0.5; // Scale down for control
-          forceY += Math.sin(angle) * force * 0.5;
-        }
+          forceX += Math.cos(angle) * force * 0.35;
+          forceY += Math.sin(angle) * force * 0.35;
+        });
 
         // Spring Return
         const springDx = point.originX - point.x;
@@ -115,19 +167,21 @@ export default function DistortionGrid() {
 
       ctx.lineWidth = 1;
 
-      const mouse = mouseRef.current;
-
-      // Helper to calculate opacity based on distance to mouse
       const getOpacity = (x: number, y: number) => {
-        const dx = x - mouse.x;
-        const dy = y - mouse.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < MOUSE_RADIUS) {
-          // Fade from 0.15 at center to 0.04 at edge
-          const intensity = 1 - dist / MOUSE_RADIUS;
-          return 0.04 + intensity * 0.11; 
-        }
-        return 0.04;
+        let maxIntensity = 0;
+
+        trailRef.current.forEach((trailPoint) => {
+          const dx = x - trailPoint.x;
+          const dy = y - trailPoint.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < MOUSE_RADIUS) {
+            const intensity =
+              (1 - dist / MOUSE_RADIUS) * trailPoint.strength;
+            if (intensity > maxIntensity) maxIntensity = intensity;
+          }
+        });
+
+        return 0.04 + maxIntensity * 0.07;
       };
 
       for (let i = 0; i < cols; i++) {
@@ -185,14 +239,18 @@ export default function DistortionGrid() {
 
     const handleMouseMove = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
-      mouseRef.current = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      };
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const now = performance.now();
+
+      if (now - lastTrailSampleRef.current >= TRAIL_SAMPLE_RATE) {
+        updateTrail(x, y, now);
+        lastTrailSampleRef.current = now;
+      }
     };
 
     const handleMouseLeave = () => {
-        mouseRef.current = { x: -1000, y: -1000 };
+      lastTrailSampleRef.current = 0;
     };
 
     window.addEventListener("resize", handleResize);
