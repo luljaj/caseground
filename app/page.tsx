@@ -21,13 +21,13 @@ export default function HomePage() {
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
                 href="/problems"
-                className="rounded h-10 px-6 flex items-center text-sm font-medium bg-white text-black hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                className="bg-gradient-to-br from-white via-white to-zinc-50 rounded-3xl border border-zinc-200 hover:border-zinc-300 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-zinc-950/10 px-8 py-3 text-zinc-900 hover:text-black"
               >
                 Start practicing
               </Link>
               <Link
                 href="/dashboard"
-                className="rounded h-10 px-6 flex items-center text-sm font-medium border border-border bg-transparent text-text-primary hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border"
+                className="bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 rounded-3xl border border-zinc-800 hover:border-zinc-700 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-zinc-950/50 px-8 py-3 text-white hover:text-zinc-100"
               >
                 Dashboard
               </Link>

@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 export function SignInForm() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
+  const nextPath = searchParams.get("next") ?? undefined;
 
   return (
     <div className="w-full max-w-md space-y-8">
@@ -27,7 +28,7 @@ export function SignInForm() {
         </div>
       )}
 
-      <SignInButton />
+      <SignInButton nextPath={nextPath} />
 
       <p className="text-center text-[13px] text-text-muted">
         <Link

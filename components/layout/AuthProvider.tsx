@@ -35,16 +35,25 @@ export default function AuthProvider({
     };
   }, [supabase]);
 
-  const signInWithGoogle = useCallback(async () => {
-    const redirectBase =
-      process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${redirectBase}/auth/callback?next=/problems`,
-      },
-    });
-  }, [supabase]);
+  const signInWithGoogle = useCallback(
+    async (nextPath?: string) => {
+      const redirectBase =
+        process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
+      const safeNext =
+        nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//")
+          ? nextPath
+          : "/problems";
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${redirectBase}/auth/callback?next=${encodeURIComponent(
+            safeNext
+          )}`,
+        },
+      });
+    },
+    [supabase]
+  );
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();

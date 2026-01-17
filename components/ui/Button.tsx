@@ -14,13 +14,13 @@ const baseClasses =
 
 const variants: Record<Variant, string> = {
   primary:
-    "border-transparent bg-accent text-white shadow-[0_1px_2px_rgba(0,0,0,0.2)] hover:bg-accent/90 hover:shadow-[0_2px_4px_rgba(0,0,0,0.2)]",
+    "bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 rounded-3xl border border-zinc-800 hover:border-zinc-700 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-zinc-950/50 px-8 py-4 text-white hover:text-zinc-100",
   secondary:
-    "border-border bg-surface text-text-primary shadow-sm hover:bg-surface/80 hover:border-text-secondary/30",
+    "bg-gradient-to-br from-white via-white to-zinc-50 rounded-3xl border border-zinc-200 hover:border-zinc-300 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-zinc-950/10 px-8 py-3 text-zinc-900 hover:text-black",
   ghost:
-    "border-transparent bg-transparent text-text-secondary hover:bg-white/5 hover:text-text-primary",
+    "bg-transparent rounded-3xl border border-zinc-800 hover:border-zinc-700 transition-all duration-300 hover:scale-[1.02] hover:bg-zinc-900/50 px-8 py-3 text-zinc-400 hover:text-zinc-100",
   danger:
-    "border-transparent bg-error/10 text-error hover:bg-error/20",
+    "bg-gradient-to-br from-red-800 via-red-800 to-red-900 rounded-3xl border border-red-700 hover:border-red-600 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-red-950/50 px-8 py-3 text-white hover:text-red-50",
 };
 
 const sizes: Record<Size, string> = {

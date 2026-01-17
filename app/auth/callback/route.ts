@@ -5,8 +5,11 @@ import { cookies } from "next/headers";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  // If there's no code, redirect to home
-  const next = searchParams.get("next") ?? "/problems";
+  const nextParam = searchParams.get("next") ?? "/problems";
+  const nextPath =
+    nextParam.startsWith("/") && !nextParam.startsWith("//")
+      ? nextParam
+      : "/problems";
 
   if (code) {
     const cookieStore = await cookies();
@@ -33,9 +36,24 @@ export async function GET(request: Request) {
       }
     );
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      const user = data.user;
+      if (user) {
+        const { data: profile, error: profileError } = await supabase
+          .from("users")
+          .select("username")
+          .eq("id", user.id)
+          .single();
+
+        if (profileError || !profile?.username) {
+          const onboardingUrl = new URL("/onboarding", origin);
+          onboardingUrl.searchParams.set("next", nextPath);
+          return NextResponse.redirect(onboardingUrl.toString());
+        }
+      }
+
+      return NextResponse.redirect(`${origin}${nextPath}`);
     }
   }
 

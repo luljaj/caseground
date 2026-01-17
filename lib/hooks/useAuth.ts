@@ -8,7 +8,7 @@ export type AuthContextValue = {
   user: User | null;
   loading: boolean;
   supabase: SupabaseClient;
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: (nextPath?: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
 

@@ -1,20 +1,12 @@
-import type { Category, SortParams, Track } from "@/types";
-import { Checkbox } from "@/components/ui/Checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils/cn";
+"use client";
 
-const trackOptions: Array<{ label: string; value: Track | "all" }> = [
-  { label: "All Tracks", value: "all" },
-  { label: "Estimations", value: "estimations" },
-  { label: "Behaviorals", value: "behaviorals" },
-  { label: "Reasoning", value: "reasoning" },
-];
+import { useRef, useEffect, useState } from "react";
+import type { Category, SortParams, Track } from "@/types";
+import { Search } from "lucide-react";
+import { Checkbox } from "@/components/ui/Checkbox";
+import Dropdown from "@/components/ui/Dropdown";
+
+type TrackFilter = Track | "all";
 
 const categoryOptions: Record<Track, Array<{ label: string; value: Category }>> = {
   estimations: [
@@ -36,128 +28,6 @@ const categoryOptions: Record<Track, Array<{ label: string; value: Category }>> 
     { label: "LBO Models", value: "LBO Models" },
   ],
 };
-
-const sortOptions = [
-  { label: "Number (Asc)", value: "number:asc" },
-  { label: "Number (Desc)", value: "number:desc" },
-  { label: "Track (Asc)", value: "track:asc" },
-  { label: "Track (Desc)", value: "track:desc" },
-];
-
-type DropdownOption = { label: string; value: string };
-
-function FilterDropdown({
-  value,
-  options,
-  onValueChange,
-  placeholder = "Select",
-  disabled = false,
-  ariaLabel,
-}: {
-  value: string;
-  options: DropdownOption[];
-  onValueChange: (value: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  ariaLabel: string;
-}) {
-  const selectedLabel =
-    options.find((option) => option.value === value)?.label ?? placeholder;
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className={cn(
-            "flex h-8 items-center gap-2 rounded-md border border-white/[0.06] bg-transparent px-3 text-[13px] text-text-primary transition-all duration-150",
-            "hover:border-white/[0.12] hover:bg-white/[0.02]",
-            "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20",
-            "disabled:cursor-not-allowed disabled:opacity-40",
-            disabled && "text-text-muted"
-          )}
-          disabled={disabled}
-          aria-label={ariaLabel}
-        >
-          <span className="truncate">{selectedLabel}</span>
-          <svg
-            className="h-3 w-3 shrink-0 text-text-muted"
-            viewBox="0 0 12 12"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path
-              d="M3 4.5L6 7.5L9 4.5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-      </DropdownMenuTrigger>
-      {disabled ? null : (
-        <DropdownMenuContent align="start" className="min-w-[160px]">
-          <DropdownMenuRadioGroup value={value} onValueChange={onValueChange}>
-            {options.map((option) => (
-              <DropdownMenuRadioItem key={option.value} value={option.value}>
-                {option.label}
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      )}
-    </DropdownMenu>
-  );
-}
-
-function SearchInput({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-}) {
-  return (
-    <div className="relative">
-      <svg
-        className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted"
-        viewBox="0 0 16 16"
-        fill="none"
-        aria-hidden="true"
-      >
-        <path
-          d="M7 12.5C10.0376 12.5 12.5 10.0376 12.5 7C12.5 3.96243 10.0376 1.5 7 1.5C3.96243 1.5 1.5 3.96243 1.5 7C1.5 10.0376 3.96243 12.5 7 12.5Z"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M14.5 14.5L11 11"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className={cn(
-          "h-8 w-full rounded-md border border-white/[0.06] bg-transparent pl-9 pr-3 text-[13px] text-text-primary placeholder:text-text-muted",
-          "transition-all duration-150",
-          "hover:border-white/[0.12]",
-          "focus:border-white/[0.12] focus:outline-none focus:ring-1 focus:ring-white/10"
-        )}
-      />
-    </div>
-  );
-}
 
 export default function ProblemFilters({
   track,
@@ -182,99 +52,167 @@ export default function ProblemFilters({
   onNotDoneChange: (value: boolean) => void;
   onSortChange: (value: SortParams) => void;
 }) {
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+
+  // Refs for each tab button
+  const tabRefs = useRef<{ [key in TrackFilter]: HTMLButtonElement | null }>({
+    all: null,
+    estimations: null,
+    behaviorals: null,
+    reasoning: null,
+  });
+
+  // Update indicator position when active track changes
+  useEffect(() => {
+    const activeButton = tabRefs.current[track];
+    if (activeButton) {
+      setIndicatorStyle({
+        left: activeButton.offsetLeft,
+        width: activeButton.offsetWidth,
+      });
+    }
+  }, [track]);
+
+  // Get category options for current track
   const categories =
     track === "all"
       ? []
-      : [{ label: "All Categories", value: "all" as const }, ...categoryOptions[track]];
-  const sortValue = `${sort.field}:${sort.direction}`;
-  const isCategoryDisabled = track === "all";
+      : [
+          { label: "All Categories", value: "all" },
+          ...categoryOptions[track],
+        ];
 
-  const tracks: Array<{ label: string; value: Track; color: string; underline: string }> = [
-    { label: "Estimations", value: "estimations", color: "text-blue-400/70", underline: "bg-blue-400/70" },
-    { label: "Behaviorals", value: "behaviorals", color: "text-violet-400/70", underline: "bg-violet-400/70" },
-    { label: "Reasoning", value: "reasoning", color: "text-amber-400/70", underline: "bg-amber-400/70" },
+  // Sort options
+  const sortOptions = [
+    { value: "number:asc", label: "Number" },
+    { value: "title:asc", label: "Title" },
+    { value: "track:asc", label: "Track" },
+    { value: "category:asc", label: "Category" },
   ];
+
+  const sortValue = `${sort.field}:${sort.direction}`;
+
+  const handleSortChange = (value: string) => {
+    const [field, direction] = value.split(":");
+    onSortChange({
+      field: field as SortParams["field"],
+      direction: direction as SortParams["direction"],
+    });
+  };
+
+  const handleCategoryChange = (value: string) => {
+    onCategoryChange(value as Category | "all");
+  };
 
   return (
     <div className="flex flex-col gap-6">
       {/* Track Tabs */}
-      <div className="flex items-center gap-1 border-b border-white/[0.06]">
+      <div className="relative flex gap-6 border-b border-zinc-800">
         <button
+          ref={(ref) => (tabRefs.current.all = ref)}
           onClick={() => onTrackChange("all")}
-          className={cn(
-            "relative px-3 py-2 text-[13px] font-medium transition-colors duration-150",
-            track === "all"
-              ? "text-text-primary"
-              : "text-text-muted hover:text-text-secondary"
-          )}
+          className={`pb-3 text-[14px] transition-colors ${
+            track === "all" ? "text-white" : "text-[#9F9FA9] hover:text-white"
+          }`}
         >
           All
-          {track === "all" && (
-            <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-text-primary" />
-          )}
         </button>
-        {tracks.map((t) => (
-          <button
-            key={t.value}
-            onClick={() => onTrackChange(t.value)}
-            className={cn(
-              "relative px-3 py-2 text-[13px] font-medium transition-colors duration-150",
-              track === t.value
-                ? t.color
-                : "text-text-muted hover:text-text-secondary"
-            )}
-          >
-            {t.label}
-            {track === t.value && (
-              <span className={`absolute bottom-0 left-0 right-0 h-[2px] ${t.underline}`} />
-            )}
-          </button>
-        ))}
+        <button
+          ref={(ref) => (tabRefs.current.estimations = ref)}
+          onClick={() => onTrackChange("estimations")}
+          className={`pb-3 text-[14px] transition-colors ${
+            track === "estimations"
+              ? "text-white"
+              : "text-[#9F9FA9] hover:text-white"
+          }`}
+        >
+          Estimations
+        </button>
+        <button
+          ref={(ref) => (tabRefs.current.behaviorals = ref)}
+          onClick={() => onTrackChange("behaviorals")}
+          className={`pb-3 text-[14px] transition-colors ${
+            track === "behaviorals"
+              ? "text-white"
+              : "text-[#9F9FA9] hover:text-white"
+          }`}
+        >
+          Behaviorals
+        </button>
+        <button
+          ref={(ref) => (tabRefs.current.reasoning = ref)}
+          onClick={() => onTrackChange("reasoning")}
+          className={`pb-3 text-[14px] transition-colors ${
+            track === "reasoning"
+              ? "text-white"
+              : "text-[#9F9FA9] hover:text-white"
+          }`}
+        >
+          Reasoning
+        </button>
+
+        {/* Animated indicator */}
+        <div
+          className="absolute bottom-0 h-0.5 bg-white transition-all duration-300 ease-out"
+          style={{
+            left: indicatorStyle.left,
+            width: indicatorStyle.width,
+          }}
+        />
       </div>
 
-      {/* Filters Row */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 flex-wrap items-center gap-2">
-          <div className="w-full sm:w-56">
-            <SearchInput
+      {/* Search and Filters */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        {/* Search and Sort */}
+        <div className="flex items-center gap-3 flex-1 max-w-2xl">
+          {/* Search Input */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+            <input
+              type="text"
+              placeholder="Search..."
               value={search}
-              onChange={onSearchChange}
-              placeholder="Search questions..."
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 py-2.5 pl-11 pr-16 text-[14px] text-white placeholder-zinc-500 transition-colors focus:border-zinc-700 focus:outline-none hover:border-zinc-700"
             />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-0.5 text-[12px] text-zinc-500">
+              <span className="rounded bg-zinc-800 px-1.5 py-0.5">⌘</span>
+              <span className="rounded bg-zinc-800 px-1.5 py-0.5">K</span>
+            </div>
           </div>
-          <FilterDropdown
-            value={category}
-            options={categories}
-            onValueChange={(value) =>
-              onCategoryChange(value as Category | "all")
-            }
-            placeholder="Category"
-            disabled={isCategoryDisabled}
-            ariaLabel="Category"
-          />
-          <FilterDropdown
+
+          {/* Category Dropdown (only shown when track is selected) */}
+          {track !== "all" && categories.length > 0 && (
+            <Dropdown
+              placeholder="Category"
+              value={category}
+              onChange={handleCategoryChange}
+              options={categories}
+            />
+          )}
+
+          {/* Sort Dropdown */}
+          <Dropdown
+            placeholder="Sort by"
             value={sortValue}
+            onChange={handleSortChange}
             options={sortOptions}
-            onValueChange={(value) => {
-              const [field, direction] = value.split(":");
-              onSortChange({
-                field: field as SortParams["field"],
-                direction: direction as SortParams["direction"],
-              });
-            }}
-            placeholder="Sort"
-            ariaLabel="Sort"
           />
         </div>
 
-        <label className="flex cursor-pointer select-none items-center gap-2 text-[13px] text-text-secondary transition-colors hover:text-text-primary">
-          <Checkbox
-            id="hide-completed"
-            checked={notDone}
-            onChange={(event) => onNotDoneChange(event.target.checked)}
-          />
-          <span>Hide completed</span>
-        </label>
+        {/* Right side filters */}
+        <div className="flex items-center gap-4">
+          {/* Hide completed checkbox */}
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <Checkbox
+              checked={notDone}
+              onChange={(e) => onNotDoneChange(e.target.checked)}
+            />
+            <span className="text-[14px] text-zinc-400 group-hover:text-zinc-300 transition-colors">
+              Hide completed
+            </span>
+          </label>
+        </div>
       </div>
     </div>
   );

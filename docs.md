@@ -71,6 +71,7 @@ Table: `public.questions`
 Table: `public.users`
 - `id` uuid PK (auth.users FK)
 - `email` text
+- `username` text
 - `ai_credits` integer (default 5)
 - `created_at` timestamp
 

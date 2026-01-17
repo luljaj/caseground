@@ -1,16 +1,16 @@
 "use client";
 
-import { useAuth } from "@/lib/hooks/useAuth";
 import { useState } from "react";
+import { useAuth } from "@/lib/hooks/useAuth";
 
-export function SignInButton() {
+export function SignInButton({ nextPath }: { nextPath?: string }) {
   const { signInWithGoogle } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSignIn = async () => {
     setIsLoading(true);
     try {
-      await signInWithGoogle();
+      await signInWithGoogle(nextPath);
     } catch (error) {
       console.error("Sign-in error:", error);
       setIsLoading(false);

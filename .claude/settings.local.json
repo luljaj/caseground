@@ -8,7 +8,8 @@
       "WebFetch(domain:supabase.com)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(ls -la \"D:\\\\Caseground\\\\app\\\\api\"\" 2>/dev/null | grep -v \"node_modules \")"
+      "Bash(ls -la \"D:\\\\Caseground\\\\app\\\\api\"\" 2>/dev/null | grep -v \"node_modules \")",
+      "Bash(npm install:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -1,19 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Card } from "@tremor/react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import Spinner from "@/components/ui/Spinner";
 import Button from "@/components/ui/Button";
-import Heatmap from "@/components/dashboard/Heatmap";
 import TypeBreakdownChart from "@/components/dashboard/TypeBreakdownChart";
+import { cn } from "@/lib/utils/cn";
 
 type StatsPayload = {
   totalAttempted: number;
   aiCredits: number;
-  heatmap: Array<{ date: string; count: number }>;
   byType: {
     estimations: number;
     behaviorals: number;
@@ -21,12 +18,78 @@ type StatsPayload = {
   };
 };
 
+type DashboardSettings = {
+  autoStartTimer: boolean;
+  speechToTextReady: boolean;
+  showPracticeTips: boolean;
+};
+
+const defaultSettings: DashboardSettings = {
+  autoStartTimer: true,
+  speechToTextReady: false,
+  showPracticeTips: true,
+};
+
+const settingsStorageKey = "caseground.dashboard.settings";
+
+const settingsOptions: Array<{
+  key: keyof DashboardSettings;
+  title: string;
+  description: string;
+}> = [
+  {
+    key: "autoStartTimer",
+    title: "Auto-start timers",
+    description: "Begin the countdown as soon as a question opens.",
+  },
+  {
+    key: "speechToTextReady",
+    title: "Speech-to-text ready",
+    description: "Keep voice input ready on question pages.",
+  },
+  {
+    key: "showPracticeTips",
+    title: "Practice tips",
+    description: "Surface short reminders on structure and pacing.",
+  },
+];
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<StatsPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [settings, setSettings] = useState<DashboardSettings>(defaultSettings);
+  const [settingsReady, setSettingsReady] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(settingsStorageKey);
+      if (stored) {
+        const parsed = JSON.parse(stored) as Partial<DashboardSettings>;
+        setSettings({ ...defaultSettings, ...parsed });
+      }
+    } catch {
+      setSettings(defaultSettings);
+    } finally {
+      setSettingsReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!settingsReady) {
+      return;
+    }
+    try {
+      window.localStorage.setItem(
+        settingsStorageKey,
+        JSON.stringify(settings)
+      );
+    } catch {
+      // Ignore storage errors to avoid blocking settings changes.
+    }
+  }, [settings, settingsReady]);
 
   useEffect(() => {
     if (!user) {
@@ -60,6 +123,10 @@ export default function DashboardPage() {
     };
   }, [user]);
 
+  const updateSetting = (key: keyof DashboardSettings, value: boolean) => {
+    setSettings((prev) => ({ ...prev, [key]: value }));
+  };
+
   if (!user) {
     return (
       <div className="rounded-md border border-border/80 bg-surface/40 p-6 text-sm text-text-secondary">
@@ -90,55 +157,124 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-8 p-6 md:p-8 border border-border rounded-lg bg-surface/20">
-      {/* Header with AI Credits */}
-      <div className="flex items-center justify-between animate-fade-up">
-        <h1 className="text-2xl font-semibold text-text-primary">Dashboard</h1>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-surface/40 border border-border/80">
-          <span className="text-xs text-text-muted">AI Credits</span>
-          <span className="text-sm font-medium text-text-primary">
+    <div className="mx-auto flex max-w-5xl flex-col gap-8 pb-12">
+      <div className="flex flex-col gap-4 animate-fade-up md:flex-row md:items-center md:justify-between">
+        <div className="flex max-w-xl flex-col gap-2">
+          <h1 className="text-2xl font-semibold text-text-primary">
+            Dashboard
+          </h1>
+          <p className="text-sm text-text-secondary">
+            Track your progress and activity across all question types.
+          </p>
+        </div>
+        <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-surface/60 px-4 py-2.5">
+          <span className="text-xs font-medium uppercase tracking-wider text-text-secondary/60">
+            AI Credits
+          </span>
+          <span className="text-base font-semibold text-text-primary">
             {stats.aiCredits}
           </span>
         </div>
       </div>
 
-      {/* Heatmap - emphasized */}
-      <div className="animate-fade-up" style={{ animationDelay: "50ms" }}>
-        <Card className="border-border bg-surface/40 p-8 rounded-lg ring-0 focus:ring-0 focus-visible:ring-0">
-          <h2 className="text-lg font-semibold text-text-primary mb-6">
-            Activity
-          </h2>
-          <Heatmap data={stats.heatmap} />
-        </Card>
-      </div>
-
-      {/* Stats row */}
       <div
-        className="grid gap-6 md:grid-cols-2 animate-fade-up"
-        style={{ animationDelay: "100ms" }}
+        className="grid gap-6 animate-fade-up md:grid-cols-2"
+        style={{ animationDelay: "50ms" }}
       >
-        {/* Total progress card - using Tremor Card */}
-        <Card className="border-border bg-surface/40 p-8 rounded-lg ring-0 focus:ring-0 focus-visible:ring-0">
-          <p className="text-sm text-text-secondary">Questions Attempted</p>
-          <p className="text-3xl font-semibold text-text-primary mt-3">
-            {stats.totalAttempted}
-          </p>
-          <p className="text-xs text-text-muted mt-2">
+        <div className="rounded-lg border border-white/5 bg-surface/50 p-8 transition-colors hover:bg-surface/60">
+          <div>
+            <h3 className="text-xs font-medium uppercase tracking-wider text-text-secondary/60">
+              Questions Attempted
+            </h3>
+            <p className="mt-4 text-4xl font-semibold text-text-primary">
+              {stats.totalAttempted}
+            </p>
+          </div>
+          <p className="mt-4 text-xs text-text-muted">
             Unique questions answered
           </p>
-        </Card>
+        </div>
 
-        {/* Type breakdown chart */}
         <TypeBreakdownChart {...stats.byType} />
       </div>
 
-      {/* Back link */}
-      <Link
-        href="/problems"
-        className="text-[13px] text-text-secondary transition-colors hover:text-text-primary"
-      >
-        Back to Problems
-      </Link>
+      <div className="animate-fade-up" style={{ animationDelay: "100ms" }}>
+        <div className="rounded-lg border border-border/80 bg-surface/30 p-8 transition-colors hover:bg-surface/40">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-xs font-medium uppercase tracking-wider text-text-secondary/60">
+                Settings
+              </h2>
+              <p className="mt-2 text-sm text-text-secondary">
+                Personalize your practice defaults.
+              </p>
+            </div>
+            <p className="text-xs text-text-muted">Saved on this device</p>
+          </div>
+          <div className="mt-6 divide-y divide-white/5">
+            {settingsOptions.map((setting) => {
+              const isEnabled = settings[setting.key];
+              return (
+                <div
+                  key={setting.key}
+                  className="flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between"
+                >
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-text-primary">
+                      {setting.title}
+                    </p>
+                    <p className="text-xs text-text-muted">
+                      {setting.description}
+                    </p>
+                  </div>
+                  <div
+                    className="inline-flex items-center rounded-md border border-white/10 bg-surface/40 p-1"
+                    role="group"
+                    aria-label={setting.title}
+                  >
+                    <button
+                      type="button"
+                      className={cn(
+                        "h-7 min-w-[48px] rounded px-3 text-xs font-medium uppercase tracking-wide transition-colors",
+                        isEnabled
+                          ? "bg-white/10 text-text-primary"
+                          : "text-text-secondary hover:text-text-primary"
+                      )}
+                      aria-pressed={isEnabled}
+                      onClick={() => updateSetting(setting.key, true)}
+                    >
+                      On
+                    </button>
+                    <button
+                      type="button"
+                      className={cn(
+                        "h-7 min-w-[48px] rounded px-3 text-xs font-medium uppercase tracking-wide transition-colors",
+                        !isEnabled
+                          ? "bg-white/10 text-text-primary"
+                          : "text-text-secondary hover:text-text-primary"
+                      )}
+                      aria-pressed={!isEnabled}
+                      onClick={() => updateSetting(setting.key, false)}
+                    >
+                      Off
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div className="pt-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push("/problems")}
+        >
+          Back to Problems
+        </Button>
+      </div>
     </div>
   );
 }

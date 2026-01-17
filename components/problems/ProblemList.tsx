@@ -10,53 +10,56 @@ export default function ProblemList({
 }) {
   if (questions.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="mb-3 rounded-full bg-white/[0.03] p-3">
-          <svg
-            className="h-5 w-5 text-text-muted"
-            viewBox="0 0 20 20"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path
-              d="M17.5 17.5L13.875 13.875M15.833 9.167a6.667 6.667 0 1 1-13.333 0 6.667 6.667 0 0 1 13.333 0Z"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+      <div className="relative overflow-hidden rounded-[24px]" style={{ backgroundImage: "linear-gradient(163.348deg, rgb(24, 24, 27) 0%, rgb(24, 24, 27) 50%, rgb(39, 39, 42) 100%)" }}>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="mb-4 rounded-full bg-zinc-800 p-4">
+            <svg
+              className="h-6 w-6 text-[#9F9FA9]"
+              viewBox="0 0 20 20"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M17.5 17.5L13.875 13.875M15.833 9.167a6.667 6.667 0 1 1-13.333 0 6.667 6.667 0 0 1 13.333 0Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          <p className="text-[15px] text-[#9F9FA9]">
+            No questions match your filters
+          </p>
         </div>
-        <p className="text-[13px] text-text-secondary">
-          No questions match your filters
-        </p>
+        <div aria-hidden="true" className="absolute border border-[#27272a] border-solid inset-0 pointer-events-none rounded-[24px]" />
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-white/[0.06]">
+    <div className="relative overflow-hidden rounded-[24px]" style={{ backgroundImage: "linear-gradient(163.348deg, rgb(24, 24, 27) 0%, rgb(24, 24, 27) 50%, rgb(39, 39, 42) 100%)" }}>
       <table className="w-full border-collapse text-left">
-        <thead>
-          <tr className="border-b border-white/[0.06] bg-white/[0.02]">
-            <th className="w-12 px-4 py-3">
+        <thead className="bg-zinc-800/40">
+          <tr className="border-b border-[#27272a]">
+            <th className="w-12 px-4 py-5 sm:w-16 sm:px-8">
               <span className="sr-only">Status</span>
             </th>
-            <th className="w-16 px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-text-muted">
+            <th className="w-12 px-2 py-5 text-[11px] uppercase tracking-wider text-[#9F9FA9] sm:w-20 sm:px-8">
               #
             </th>
-            <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-text-muted">
+            <th className="px-2 py-5 text-[11px] uppercase tracking-wider text-[#9F9FA9] sm:px-8">
               Question
             </th>
-            <th className="hidden w-32 px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-text-muted md:table-cell">
+            <th className="hidden w-24 px-2 py-5 text-[11px] uppercase tracking-wider text-[#9F9FA9] sm:table-cell sm:w-36 sm:px-8">
               Track
             </th>
-            <th className="hidden w-40 px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-text-muted lg:table-cell">
+            <th className="hidden w-64 px-8 py-5 text-[11px] uppercase tracking-wider text-[#9F9FA9] lg:table-cell">
               Category
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-white/[0.04]">
+        <tbody>
           {questions.map((question) => (
             <ProblemRow
               key={question.id}
@@ -66,6 +69,7 @@ export default function ProblemList({
           ))}
         </tbody>
       </table>
+      <div aria-hidden="true" className="absolute border border-[#27272a] border-solid inset-0 pointer-events-none rounded-[24px]" />
     </div>
   );
 }

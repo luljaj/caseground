@@ -38,6 +38,7 @@ export interface Question {
 export interface User {
   id: string;
   email: string;
+  username: string | null;
   ai_credits: number;
   created_at: string;
 }

@@ -24,7 +24,7 @@ export async function GET() {
 
   const { data: responses, error: responsesError } = await supabase
     .from("user_responses")
-    .select("question_id, created_at")
+    .select("question_id")
     .eq("user_id", user.id);
 
   if (responsesError) {
@@ -68,28 +68,9 @@ export async function GET() {
     reasoning: uniqueByType.get("reasoning")?.size ?? 0,
   };
 
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 364);
-
-  const heatmapMap = new Map<string, number>();
-  (responses ?? []).forEach((entry) => {
-    const createdAt = new Date(entry.created_at);
-    if (createdAt < cutoff) {
-      return;
-    }
-    const dateKey = createdAt.toISOString().slice(0, 10);
-    heatmapMap.set(dateKey, (heatmapMap.get(dateKey) ?? 0) + 1);
-  });
-
-  const heatmap = Array.from(heatmapMap.entries()).map(([date, count]) => ({
-    date,
-    count,
-  }));
-
   return NextResponse.json({
     totalAttempted,
     aiCredits: profile.ai_credits,
-    heatmap,
     byType,
   });
 }
