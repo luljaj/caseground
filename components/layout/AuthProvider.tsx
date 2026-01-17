@@ -41,7 +41,7 @@ export default function AuthProvider({
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${redirectBase}/problems`,
+        redirectTo: `${redirectBase}/auth/callback?next=/problems`,
       },
     });
   }, [supabase]);

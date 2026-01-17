@@ -27,9 +27,11 @@ export default function RootLayout({
         className={`${inter.variable} font-sans min-h-screen bg-background text-text-primary antialiased`}
       >
         <AuthProvider>
-          <div className="min-h-screen">
+          <div className="flex min-h-screen flex-col">
             <Nav />
-            <main className="relative px-6 py-6 md:px-12">{children}</main>
+            <main className="relative flex-1 px-6 py-6 md:px-12 min-h-0">
+              {children}
+            </main>
           </div>
         </AuthProvider>
       </body>

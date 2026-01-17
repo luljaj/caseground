@@ -35,6 +35,39 @@ export async function GET() {
     (responses ?? []).map((entry) => entry.question_id)
   ).size;
 
+  // Get type breakdown (estimations, behaviorals, reasoning)
+  const { data: typeData, error: typeError } = await supabase
+    .from("user_responses")
+    .select(`
+      question_id,
+      questions!inner (
+        track
+      )
+    `)
+    .eq("user_id", user.id);
+
+  if (typeError) {
+    return NextResponse.json({ error: typeError.message }, { status: 500 });
+  }
+
+  // Count unique questions per type
+  const uniqueByType = new Map<string, Set<string>>();
+  (typeData ?? []).forEach((response: any) => {
+    const track = response.questions?.track;
+    if (!track) return;
+
+    if (!uniqueByType.has(track)) {
+      uniqueByType.set(track, new Set());
+    }
+    uniqueByType.get(track)?.add(response.question_id);
+  });
+
+  const byType = {
+    estimations: uniqueByType.get("estimations")?.size ?? 0,
+    behaviorals: uniqueByType.get("behaviorals")?.size ?? 0,
+    reasoning: uniqueByType.get("reasoning")?.size ?? 0,
+  };
+
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 364);
 
@@ -57,5 +90,6 @@ export async function GET() {
     totalAttempted,
     aiCredits: profile.ai_credits,
     heatmap,
+    byType,
   });
 }

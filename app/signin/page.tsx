@@ -1,7 +1,8 @@
 import { Metadata } from "next";
+import { Suspense } from "react";
 import Logo from "@/components/layout/Logo";
-import { SignInButton } from "@/components/auth/SignInButton";
-import Link from "next/link";
+import { SignInForm } from "@/components/auth/SignInForm";
+import BodyScrollLock from "@/components/ui/BodyScrollLock";
 
 export const metadata: Metadata = {
   title: "Sign In | Caseground",
@@ -10,7 +11,9 @@ export const metadata: Metadata = {
 
 export default function SignInPage() {
   return (
-    <div className="grid lg:grid-cols-2 min-h-screen">
+    <>
+      <BodyScrollLock />
+      <div className="grid min-h-[calc(100dvh-64px)] overflow-hidden lg:grid-cols-2 -mx-6 -my-6 md:-mx-12 md:-my-6">
       {/* Left: Branding */}
       <div className="bg-background px-6 py-12 lg:px-12 lg:py-20 flex flex-col justify-center">
         <div className="max-w-lg">
@@ -42,28 +45,11 @@ export default function SignInPage() {
 
       {/* Right: Sign-in Form */}
       <div className="bg-surface border-l-0 lg:border-l border-border px-6 py-12 lg:px-12 flex items-center justify-center">
-        <div className="w-full max-w-md space-y-8">
-          <div className="text-center">
-            <h2 className="text-[24px] md:text-[28px] font-semibold tracking-tight text-white">
-              Sign in to <span className="italic">caseground</span>
-            </h2>
-            <p className="mt-2 text-[14px] text-text-secondary">
-              Continue with your Google account
-            </p>
-          </div>
-
-          <SignInButton />
-
-          <p className="text-center text-[13px] text-text-muted">
-            <Link
-              href="/problems"
-              className="hover:text-text-secondary transition-colors"
-            >
-              Browse problems without signing in
-            </Link>
-          </p>
-        </div>
+        <Suspense fallback={<div className="text-text-secondary">Loading...</div>}>
+          <SignInForm />
+        </Suspense>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
