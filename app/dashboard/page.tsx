@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/hooks/useAuth";
 import Spinner from "@/components/ui/Spinner";
 import Button from "@/components/ui/Button";
@@ -15,7 +16,8 @@ type StatsPayload = {
 };
 
 export default function DashboardPage() {
-  const { user, signInWithGoogle } = useAuth();
+  const { user } = useAuth();
+  const router = useRouter();
   const [stats, setStats] = useState<StatsPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +59,7 @@ export default function DashboardPage() {
       <div className="rounded-md border border-border/80 bg-surface/40 p-6 text-sm text-text-secondary">
         <p>Sign in to view your progress and stats.</p>
         <div className="mt-4">
-          <Button size="sm" onClick={signInWithGoogle}>
+          <Button size="sm" onClick={() => router.push("/signin")}>
             Sign in with Google
           </Button>
         </div>

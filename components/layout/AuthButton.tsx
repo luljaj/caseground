@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import { useAuth } from "@/lib/hooks/useAuth";
 
 export default function AuthButton() {
-  const { user, loading, signInWithGoogle, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const [open, setOpen] = useState(false);
+  const router = useRouter();
 
   if (loading) {
     return <div className="text-xs text-text-secondary">Loading...</div>;
@@ -14,7 +16,7 @@ export default function AuthButton() {
 
   if (!user) {
     return (
-      <Button variant="secondary" size="sm" onClick={signInWithGoogle}>
+      <Button variant="secondary" size="sm" onClick={() => router.push("/signin")}>
         Sign In
       </Button>
     );
