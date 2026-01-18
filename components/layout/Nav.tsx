@@ -24,13 +24,9 @@ export default function Nav() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <Link
-            className="text-[14px] font-medium text-text-secondary transition-colors duration-200 hover:text-text-primary focus-visible:outline-none md:hidden"
-            href="/problems"
-          >
-            Problems
-          </Link>
-          <AuthButton />
+          <div className="hidden md:block">
+            <AuthButton />
+          </div>
         </div>
       </div>
     </nav>

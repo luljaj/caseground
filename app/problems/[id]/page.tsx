@@ -5,15 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useTimer } from "@/lib/hooks/useTimer";
 import { useSpeechToText } from "@/lib/hooks/useSpeechToText";
-import QuestionPane from "@/components/question/QuestionPane";
-import SubmissionsTab from "@/components/question/SubmissionsTab";
+import ProblemCard from "@/components/question/ProblemCard";
 import ResponseInput from "@/components/question/ResponseInput";
 import SpeechToggle from "@/components/question/SpeechToggle";
-import Timer from "@/components/question/Timer";
 import Modal from "@/components/ui/Modal";
 import Spinner from "@/components/ui/Spinner";
 import Button from "@/components/ui/Button";
-import { cn } from "@/lib/utils/cn";
 import type { Question, UserResponse } from "@/types";
 
 export default function QuestionPage() {
@@ -26,7 +23,6 @@ export default function QuestionPage() {
   const [loading, setLoading] = useState(true);
   const [responses, setResponses] = useState<UserResponse[]>([]);
   const [responseText, setResponseText] = useState("");
-  const [activeTab, setActiveTab] = useState<"question" | "submissions">("question");
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -164,61 +160,16 @@ export default function QuestionPage() {
     return null;
   }
 
-  const tabs = [
-    { id: "question" as const, label: "Problem" },
-    { id: "submissions" as const, label: "History" },
-  ];
-
   return (
-    <div className="mx-auto flex h-[calc(100vh-100px)] max-w-6xl flex-col gap-0 overflow-hidden rounded-lg border border-white/[0.08] bg-white/[0.02] lg:flex-row">
+    <div className="mx-auto flex h-[80vh] max-w-6xl flex-col gap-0 overflow-hidden rounded-lg border border-white/[0.08] bg-white/[0.02] lg:flex-row">
       {/* Left Column: Question Content */}
-      <div className="flex flex-1 flex-col overflow-hidden lg:max-w-[50%]">
-        {/* Header with tabs and timer */}
-        <div className="flex items-center justify-between border-b border-white/[0.06] bg-white/[0.02] px-4">
-          <div className="flex items-center">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "relative px-3 py-3 text-[13px] font-medium transition-colors duration-150",
-                  activeTab === tab.id
-                    ? "text-text-primary"
-                    : "text-text-muted hover:text-text-secondary"
-                )}
-              >
-                {tab.label}
-                {activeTab === tab.id && (
-                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-text-primary" />
-                )}
-              </button>
-            ))}
-          </div>
-
-          <Timer
-            remainingSeconds={timer.remainingSeconds}
-            status={timer.status}
-            onStart={timer.start}
-            onPause={timer.pause}
-            onStop={timer.stop}
-            onSetDuration={timer.setDuration}
-          />
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-6">
-          {activeTab === "question" ? (
-            <QuestionPane question={question} />
-          ) : user ? (
-            <SubmissionsTab responses={responses} />
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-[13px] text-text-secondary">
-                Sign in to see your past attempts.
-              </p>
-            </div>
-          )}
-        </div>
+      <div className="flex flex-1 flex-col overflow-hidden p-5 lg:max-w-[50%]">
+        <ProblemCard
+          question={question}
+          responses={responses}
+          canViewHistory={Boolean(user)}
+          timer={timer}
+        />
       </div>
 
       {/* Right Column: Input Area */}
@@ -248,18 +199,14 @@ export default function QuestionPage() {
           <span className="text-[12px] text-text-muted">
             {responseText.length > 0 && `${responseText.split(/\s+/).filter(Boolean).length} words`}
           </span>
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             disabled={!responseText.trim() || isSubmitting}
             onClick={handleSubmit}
-            className={cn(
-              "rounded-md px-4 py-2 text-[13px] font-medium transition-all duration-150",
-              responseText.trim() && !isSubmitting
-                ? "bg-text-primary text-background hover:bg-white"
-                : "cursor-not-allowed bg-white/[0.06] text-text-muted"
-            )}
           >
             {isSubmitting ? "Submitting..." : "Submit"}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -269,7 +216,7 @@ export default function QuestionPage() {
             Sign in with Google to save your response and get AI feedback.
           </p>
           <div className="mt-6 flex justify-end">
-            <Button onClick={signInWithGoogle} size="sm">
+            <Button onClick={() => signInWithGoogle()} size="sm">
               Sign in with Google
             </Button>
           </div>

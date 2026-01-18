@@ -40,6 +40,7 @@ export default function OnboardingPage() {
       return;
     }
 
+    const currentUser = user;
     let isMounted = true;
 
     async function loadProfile() {
@@ -64,7 +65,7 @@ export default function OnboardingPage() {
           return;
         }
 
-        const suggestion = user.email?.split("@")[0] ?? "";
+        const suggestion = currentUser.email?.split("@")[0] ?? "";
         const normalizedSuggestion = normalizeUsername(suggestion)
           .replace(/[^a-z0-9_]/g, "")
           .slice(0, 20);

@@ -1,5 +1,3 @@
-import { cn } from "@/lib/utils/cn";
-
 export default function ResponseInput({
   value,
   onChange,
@@ -25,12 +23,9 @@ export default function ResponseInput({
       )}
 
       <textarea
-        className={cn(
-          "h-full min-h-[300px] w-full resize-none rounded-md border px-4 py-3 text-[14px] leading-relaxed text-text-primary placeholder:text-text-muted transition-all duration-200 focus:outline-none",
-          isListening
-            ? "border-red-500/30 bg-red-500/[0.03] pt-10"
-            : "border-white/[0.1] bg-white/[0.02] hover:border-white/[0.15] focus:border-white/[0.15]"
-        )}
+        className={`w-full h-full bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 text-zinc-300 placeholder:text-zinc-700 resize-none focus:outline-none focus:border-zinc-700 transition-colors${
+          isListening ? " pt-10" : ""
+        }`}
         placeholder={isListening ? "Listening..." : "Type your response here..."}
         value={value}
         onChange={(event) => onChange(event.target.value)}

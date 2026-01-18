@@ -21,7 +21,7 @@ export default function HomePage() {
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
                 href="/problems"
-                className="bg-gradient-to-br from-white via-white to-zinc-50 rounded-3xl border border-zinc-200 hover:border-zinc-300 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-zinc-950/10 px-8 py-3 text-zinc-900 hover:text-black"
+                className="hidden md:inline-flex bg-gradient-to-br from-white via-white to-zinc-50 rounded-3xl border border-zinc-200 hover:border-zinc-300 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-zinc-950/10 px-8 py-3 text-zinc-900 hover:text-black"
               >
                 Start practicing
               </Link>

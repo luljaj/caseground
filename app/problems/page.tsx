@@ -158,12 +158,27 @@ function ProblemsContent() {
 
 export default function ProblemsPage() {
   return (
-    <Suspense fallback={
-      <div className="flex justify-center py-20">
-        <Spinner size={32} />
+    <>
+      <section className="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center text-center md:hidden">
+        <div className="card-surface px-6 py-8">
+          <p className="text-sm text-text-secondary">
+            Please visit us on your computer.{" "}
+            <span className="italic text-text-primary">caseground</span> works
+            best on larger screens.
+          </p>
+        </div>
+      </section>
+      <div className="hidden md:block">
+        <Suspense
+          fallback={
+            <div className="flex justify-center py-20">
+              <Spinner size={32} />
+            </div>
+          }
+        >
+          <ProblemsContent />
+        </Suspense>
       </div>
-    }>
-      <ProblemsContent />
-    </Suspense>
+    </>
   );
 }
