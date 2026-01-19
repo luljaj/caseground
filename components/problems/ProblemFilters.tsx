@@ -109,7 +109,7 @@ export default function ProblemFilters({
       {/* Track Tabs */}
       <div className="relative flex gap-6 border-b border-zinc-800">
         <button
-          ref={(ref) => (tabRefs.current.all = ref)}
+          ref={(ref) => { tabRefs.current.all = ref; }}
           onClick={() => onTrackChange("all")}
           className={`pb-3 text-[14px] transition-colors ${
             track === "all" ? "text-white" : "text-[#9F9FA9] hover:text-white"
@@ -118,7 +118,7 @@ export default function ProblemFilters({
           All
         </button>
         <button
-          ref={(ref) => (tabRefs.current.estimations = ref)}
+          ref={(ref) => { tabRefs.current.estimations = ref; }}
           onClick={() => onTrackChange("estimations")}
           className={`pb-3 text-[14px] transition-colors ${
             track === "estimations"
@@ -129,7 +129,7 @@ export default function ProblemFilters({
           Estimations
         </button>
         <button
-          ref={(ref) => (tabRefs.current.behaviorals = ref)}
+          ref={(ref) => { tabRefs.current.behaviorals = ref; }}
           onClick={() => onTrackChange("behaviorals")}
           className={`pb-3 text-[14px] transition-colors ${
             track === "behaviorals"
@@ -140,7 +140,7 @@ export default function ProblemFilters({
           Behaviorals
         </button>
         <button
-          ref={(ref) => (tabRefs.current.reasoning = ref)}
+          ref={(ref) => { tabRefs.current.reasoning = ref; }}
           onClick={() => onTrackChange("reasoning")}
           className={`pb-3 text-[14px] transition-colors ${
             track === "reasoning"
