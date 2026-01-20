@@ -70,7 +70,7 @@ export default function AuthButton() {
       >
         <HeroCard
           username="Sign in"
-          email="Continue with Google"
+          email=""
           variant="dark"
         />
       </button>

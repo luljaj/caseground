@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
+import Button from "@/components/ui/Button";
 
 export function SignInButton({ nextPath }: { nextPath?: string }) {
   const { signInWithGoogle } = useAuth();
@@ -18,22 +19,20 @@ export function SignInButton({ nextPath }: { nextPath?: string }) {
   };
 
   return (
-    <button
+    <Button
       onClick={handleSignIn}
       disabled={isLoading}
-      className="w-full h-12 px-6 flex items-center justify-center gap-3
-                 bg-white text-black text-[14px] font-medium rounded-md
-                 hover:bg-gray-100 transition-colors
-                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50
-                 disabled:opacity-50 disabled:cursor-not-allowed"
+      variant="ghost"
+      size="lg"
+      className="w-full rounded-xl"
     >
       {isLoading ? (
-        <>
-          <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+        <span className="flex items-center justify-center gap-3">
+          <span className="w-4 h-4 border-2 border-zinc-600 border-t-zinc-300 rounded-full animate-spin" />
           Redirecting to Google...
-        </>
+        </span>
       ) : (
-        <>
+        <span className="flex items-center justify-center gap-3">
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
@@ -52,9 +51,9 @@ export function SignInButton({ nextPath }: { nextPath?: string }) {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          Sign in with Google
-        </>
+          Continue with Google
+        </span>
       )}
-    </button>
+    </Button>
   );
 }

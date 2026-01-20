@@ -35,14 +35,20 @@ export default function AuthProvider({
     };
   }, [supabase]);
 
+  const getRedirectBase = useCallback(() => {
+    return process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
+  }, []);
+
+  const getSafeNextPath = useCallback((nextPath?: string) => {
+    return nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//")
+      ? nextPath
+      : "/problems";
+  }, []);
+
   const signInWithGoogle = useCallback(
     async (nextPath?: string) => {
-      const redirectBase =
-        process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
-      const safeNext =
-        nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//")
-          ? nextPath
-          : "/problems";
+      const redirectBase = getRedirectBase();
+      const safeNext = getSafeNextPath(nextPath);
       await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -51,6 +57,56 @@ export default function AuthProvider({
           )}`,
         },
       });
+    },
+    [supabase, getRedirectBase, getSafeNextPath]
+  );
+
+  const signInWithEmail = useCallback(
+    async (email: string, password: string) => {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      return { error };
+    },
+    [supabase]
+  );
+
+  const signUpWithEmail = useCallback(
+    async (email: string, password: string, nextPath?: string) => {
+      const redirectBase = getRedirectBase();
+      const safeNext = getSafeNextPath(nextPath);
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${redirectBase}/auth/callback?next=${encodeURIComponent(
+            safeNext
+          )}`,
+        },
+      });
+      return { error };
+    },
+    [supabase, getRedirectBase, getSafeNextPath]
+  );
+
+  const resetPassword = useCallback(
+    async (email: string) => {
+      const redirectBase = getRedirectBase();
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${redirectBase}/auth/callback?type=recovery`,
+      });
+      return { error };
+    },
+    [supabase, getRedirectBase]
+  );
+
+  const updatePassword = useCallback(
+    async (newPassword: string) => {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      return { error };
     },
     [supabase]
   );
@@ -67,6 +123,10 @@ export default function AuthProvider({
         loading,
         supabase,
         signInWithGoogle,
+        signInWithEmail,
+        signUpWithEmail,
+        resetPassword,
+        updatePassword,
         signOut,
       }}
     >

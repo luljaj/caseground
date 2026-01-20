@@ -1,7 +1,16 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { Session, SupabaseClient, User } from "@supabase/supabase-js";
+import type {
+  AuthError,
+  Session,
+  SupabaseClient,
+  User,
+} from "@supabase/supabase-js";
+
+export type AuthResult = {
+  error: AuthError | null;
+};
 
 export type AuthContextValue = {
   session: Session | null;
@@ -9,6 +18,10 @@ export type AuthContextValue = {
   loading: boolean;
   supabase: SupabaseClient;
   signInWithGoogle: (nextPath?: string) => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<AuthResult>;
+  signUpWithEmail: (email: string, password: string, nextPath?: string) => Promise<AuthResult>;
+  resetPassword: (email: string) => Promise<AuthResult>;
+  updatePassword: (newPassword: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
 };
 
