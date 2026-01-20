@@ -24,7 +24,7 @@ export function SignInButton({ nextPath }: { nextPath?: string }) {
       disabled={isLoading}
       variant="ghost"
       size="lg"
-      className="w-full rounded-xl"
+      className="w-full"
     >
       {isLoading ? (
         <span className="flex items-center justify-center gap-3">

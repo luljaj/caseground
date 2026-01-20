@@ -156,7 +156,7 @@ export function ResetPasswordForm() {
           variant="secondary"
           size="lg"
           disabled={isLoading}
-          className="w-full rounded-xl"
+          className="w-full"
         >
           {isLoading ? (
             <span className="flex items-center justify-center gap-2">
