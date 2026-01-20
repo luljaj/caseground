@@ -133,13 +133,22 @@ All routes live in `app/api/*`.
 
 ## UI Flows
 - **Landing** (`/`): intro + CTA to problems
-- **Problems** (`/problems`): table-first list with title + prompt preview, filters + sorting + pagination, optional "Not done" toggle
+- **Problems** (`/problems`): table-first list with title + prompt preview, filters + sorting + pagination, optional "Not done" toggle, plus List View / Queue View switch
 - **Question** (`/problems/[id]`):
   - Question tab (title, prompt, description)
   - Submissions tab (requires auth)
   - Timer and response input (speech-to-text supported)
 - **Results** (`/problems/[id]/results`): response summary + rubric + example + AI feedback
 - **Dashboard** (`/dashboard`): total attempted + credits + heatmap
+
+## Queue Mode
+- **Build the queue:** switch to Queue View on `/problems`, click "Add More" to enter add mode, and use the [+] buttons in List View to add/remove items. You can also add the current problem from the question page.
+- **Filtered queue:** the queue respects current filters and the "Hide completed" toggle. Starting a queue skips completed problems if the setting is enabled.
+- **Playback:** starting the queue opens the first problem and shows the queue overlay (bottom center). Submitting a response advances to the next problem. Skip/Next advances without submitting.
+- **Results between problems:** if enabled, the results page shows briefly and then auto-advances after a configurable delay.
+- **Completion:** when the queue finishes, the overlay shows a summary with "View Results" links for completed responses.
+- **Storage:** queue state and settings live in localStorage (no database sync).
+- **Settings:** queue-specific settings live in Queue View; practice settings (auto-start timer, timer sound, speech-to-text ready) live in the dashboard.
 
 ## Speech-to-text
 - Hook: `lib/hooks/useSpeechToText.ts`

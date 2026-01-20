@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import Button from "@/components/ui/Button";
 import Spinner from "@/components/ui/Spinner";
 import { cn } from "@/lib/utils/cn";
@@ -48,57 +49,70 @@ export default function AIFeedback({
   const showRetry = Boolean(error) && !feedback;
 
   return (
-    <div className={cn(
-        "rounded-lg border p-5 transition-all",
-        feedback 
-            ? "border-accent/20 bg-accent/5" 
-            : "border-white/5 bg-surface/30"
-    )}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-text-primary">AI Feedback</h3>
-            {feedback && <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] text-accent">Generated</span>}
+    <div className="relative rounded-xl overflow-hidden">
+      {/* Violet gradient border for emphasis */}
+      <div className={cn(
+        "absolute inset-0 rounded-xl transition-all duration-300",
+        feedback
+          ? "bg-gradient-to-br from-violet-500/40 via-blue-500/20 to-violet-600/40"
+          : "bg-gradient-to-br from-violet-500/25 via-zinc-700/15 to-violet-600/25"
+      )} />
+      <div className="absolute inset-[1px] bg-gradient-to-br from-zinc-900/98 via-[#0d0d12] to-zinc-950/98 rounded-xl" />
+
+      <div className="relative p-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-zinc-100">AI Feedback</h3>
+            {feedback && (
+              <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-medium text-violet-400">
+                Generated
+              </span>
+            )}
+          </div>
+          <span className="text-xs text-zinc-500">
+            {credits} credits left
+          </span>
         </div>
-        <span className="text-xs text-text-secondary">
-          {credits} credits left
-        </span>
-      </div>
-      
-      <div className="mt-4 text-[15px] leading-relaxed text-text-secondary">
-        {feedback ? (
-          <p className="text-text-primary">{feedback}</p>
-        ) : (
-          <p className="italic text-text-secondary/60">Generate targeted feedback based on the rubric to improve your answer.</p>
+
+        <div className="mt-4 text-[15px] leading-relaxed">
+          {feedback ? (
+            <div className="prose prose-sm prose-invert prose-zinc max-w-none text-zinc-200">
+              <ReactMarkdown>{feedback}</ReactMarkdown>
+            </div>
+          ) : (
+            <p className="italic text-zinc-500">
+              Generate targeted feedback based on the rubric to improve your answer.
+            </p>
+          )}
+        </div>
+
+        {error && (
+          <p className="mt-3 text-xs text-error bg-error/10 p-2 rounded-lg">{error}</p>
+        )}
+
+        {(!feedback || showRetry) && (
+          <div className="mt-5">
+            <Button
+              size="sm"
+              onClick={handleFetch}
+              disabled={loading || credits <= 0}
+              variant="primary"
+            >
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <Spinner size={14} /> Generating...
+                </span>
+              ) : credits <= 0 ? (
+                "No credits remaining"
+              ) : showRetry ? (
+                "Retry feedback"
+              ) : (
+                "Generate Feedback"
+              )}
+            </Button>
+          </div>
         )}
       </div>
-
-      {error ? (
-        <p className="mt-3 text-xs text-error bg-error/10 p-2 rounded">{error}</p>
-      ) : null}
-
-      {!feedback || showRetry ? (
-        <div className="mt-5">
-            <Button
-            size="sm"
-            onClick={handleFetch}
-            disabled={loading || credits <= 0}
-            className="w-full sm:w-auto"
-            variant="primary"
-            >
-            {loading ? (
-                <span className="flex items-center gap-2">
-                <Spinner size={14} /> Generating...
-                </span>
-            ) : credits <= 0 ? (
-                "No credits remaining"
-            ) : showRetry ? (
-                "Retry feedback"
-            ) : (
-                "Generate Feedback"
-            )}
-            </Button>
-        </div>
-      ) : null}
     </div>
   );
 }

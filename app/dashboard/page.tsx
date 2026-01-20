@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { useSettings } from "@/lib/hooks/useSettings";
 import Spinner from "@/components/ui/Spinner";
 import Button from "@/components/ui/Button";
 import TypeBreakdownChart from "@/components/dashboard/TypeBreakdownChart";
@@ -18,22 +19,8 @@ type StatsPayload = {
   };
 };
 
-type DashboardSettings = {
-  autoStartTimer: boolean;
-  speechToTextReady: boolean;
-  showPracticeTips: boolean;
-};
-
-const defaultSettings: DashboardSettings = {
-  autoStartTimer: true,
-  speechToTextReady: false,
-  showPracticeTips: true,
-};
-
-const settingsStorageKey = "caseground.dashboard.settings";
-
 const settingsOptions: Array<{
-  key: keyof DashboardSettings;
+  key: "autoStartTimer" | "timerSound" | "speechToTextReady" | "showPracticeTips";
   title: string;
   description: string;
 }> = [
@@ -41,6 +28,11 @@ const settingsOptions: Array<{
     key: "autoStartTimer",
     title: "Auto-start timers",
     description: "Begin the countdown as soon as a question opens.",
+  },
+  {
+    key: "timerSound",
+    title: "Timer sound",
+    description: "Play a chime when the timer finishes.",
   },
   {
     key: "speechToTextReady",
@@ -57,39 +49,10 @@ const settingsOptions: Array<{
 export default function DashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const { settings, updateSetting } = useSettings();
   const [stats, setStats] = useState<StatsPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [settings, setSettings] = useState<DashboardSettings>(defaultSettings);
-  const [settingsReady, setSettingsReady] = useState(false);
-
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(settingsStorageKey);
-      if (stored) {
-        const parsed = JSON.parse(stored) as Partial<DashboardSettings>;
-        setSettings({ ...defaultSettings, ...parsed });
-      }
-    } catch {
-      setSettings(defaultSettings);
-    } finally {
-      setSettingsReady(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!settingsReady) {
-      return;
-    }
-    try {
-      window.localStorage.setItem(
-        settingsStorageKey,
-        JSON.stringify(settings)
-      );
-    } catch {
-      // Ignore storage errors to avoid blocking settings changes.
-    }
-  }, [settings, settingsReady]);
 
   useEffect(() => {
     if (!user) {
@@ -122,10 +85,6 @@ export default function DashboardPage() {
       isMounted = false;
     };
   }, [user]);
-
-  const updateSetting = (key: keyof DashboardSettings, value: boolean) => {
-    setSettings((prev) => ({ ...prev, [key]: value }));
-  };
 
   if (!user) {
     return (

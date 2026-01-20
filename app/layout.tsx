@@ -3,6 +3,9 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/layout/Nav";
 import AuthProvider from "@/components/layout/AuthProvider";
+import { SettingsProvider } from "@/lib/context/SettingsContext";
+import { QueueProvider } from "@/lib/context/QueueContext";
+import QueueOverlay from "@/components/queue/QueueOverlay";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -27,12 +30,17 @@ export default function RootLayout({
         className={`${inter.variable} font-sans min-h-screen bg-background text-text-primary antialiased`}
       >
         <AuthProvider>
-          <div className="flex min-h-screen flex-col">
-            <Nav />
-            <main className="relative flex-1 px-6 py-6 md:px-12 min-h-0">
-              {children}
-            </main>
-          </div>
+          <SettingsProvider>
+            <QueueProvider>
+              <div className="flex min-h-screen flex-col">
+                <Nav />
+                <main className="relative flex-1 px-6 py-6 md:px-12 min-h-0">
+                  {children}
+                </main>
+              </div>
+              <QueueOverlay />
+            </QueueProvider>
+          </SettingsProvider>
         </AuthProvider>
       </body>
     </html>

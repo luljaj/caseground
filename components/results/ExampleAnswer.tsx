@@ -6,7 +6,7 @@ export default function ExampleAnswer({ answer }: { answer: string }) {
       </h3>
       <div className="rounded-lg border border-white/5 bg-surface/30 p-5">
         <p className="text-[15px] leading-relaxed text-text-secondary">
-            {answer}
+          {answer}
         </p>
       </div>
     </div>

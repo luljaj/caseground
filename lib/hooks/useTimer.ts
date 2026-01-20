@@ -1,13 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export type TimerStatus = "idle" | "running" | "paused" | "finished";
 
-export function useTimer(initialSeconds: number) {
+export function useTimer(
+  initialSeconds: number,
+  options?: { onFinish?: () => void }
+) {
   const [totalSeconds, setTotalSeconds] = useState(initialSeconds);
   const [remainingSeconds, setRemainingSeconds] = useState(initialSeconds);
   const [status, setStatus] = useState<TimerStatus>("idle");
+  const onFinishRef = useRef(options?.onFinish);
+  const notifiedRef = useRef(false);
+
+  useEffect(() => {
+    onFinishRef.current = options?.onFinish;
+  }, [options?.onFinish]);
 
   useEffect(() => {
     setTotalSeconds(initialSeconds);
@@ -31,6 +40,18 @@ export function useTimer(initialSeconds: number) {
     }, 1000);
 
     return () => clearInterval(timer);
+  }, [status]);
+
+  useEffect(() => {
+    if (status === "finished") {
+      if (!notifiedRef.current) {
+        notifiedRef.current = true;
+        onFinishRef.current?.();
+      }
+      return;
+    }
+
+    notifiedRef.current = false;
   }, [status]);
 
   const start = useCallback(() => {

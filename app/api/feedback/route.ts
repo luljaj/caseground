@@ -1,6 +1,31 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+function formatRubric(rubric: unknown): string {
+  if (!Array.isArray(rubric)) {
+    return "";
+  }
+
+  const lines = rubric
+    .map((item) => {
+      if (typeof item === "string") {
+        return item.trim();
+      }
+      if (item && typeof item === "object" && "text" in item) {
+        const value = (item as { text?: unknown }).text;
+        return typeof value === "string" ? value.trim() : "";
+      }
+      return "";
+    })
+    .filter((line): line is string => Boolean(line));
+
+  if (lines.length === 0) {
+    return "";
+  }
+
+  return lines.map((line) => `- ${line}`).join("\n");
+}
+
 export async function POST(request: Request) {
   const supabase = await createSupabaseServerClient();
   const {
@@ -46,7 +71,7 @@ export async function POST(request: Request) {
 
   const { data: question, error: questionError } = await supabase
     .from("questions")
-    .select("prompt, rubric")
+    .select("prompt, rubric, description")
     .eq("id", responseRow.question_id)
     .single();
 
@@ -56,49 +81,117 @@ export async function POST(request: Request) {
 
   const apiUrl = process.env.AI_API_URL;
   const apiKey = process.env.AI_API_KEY;
+  const defaultModel = process.env.DEFAULT_MODEL?.trim();
 
-  if (!apiUrl || !apiKey) {
+  if (!apiUrl || !apiKey || !defaultModel) {
     return NextResponse.json({ error: "AI API not configured." }, { status: 500 });
+  }
+
+  const rubricText = formatRubric(question.rubric);
+
+  // Configurable system prompt via environment variable
+  const defaultSystemPrompt = `You are an interview coach providing feedback on case interview responses.
+
+## Instructions
+- Analyze the candidate's response against the rubric criteria
+- Provide specific, actionable feedback
+- Use markdown formatting for clear structure
+- Include "Strengths" and "Areas for Improvement" sections
+- Be encouraging but honest
+- Keep feedback concise (4-6 key points)
+
+## Format
+Use this structure:
+### Strengths
+- [strength 1]
+- [strength 2]
+
+### Areas for Improvement
+- [improvement 1]
+- [improvement 2]
+
+### Overall
+[1-2 sentence summary]`;
+
+  const systemPrompt = process.env.AI_SYSTEM_PROMPT || defaultSystemPrompt;
+
+  const promptParts = [
+    `Question:\n${question.prompt}`,
+    question.description ? `Description:\n${question.description}` : "",
+    rubricText ? `Rubric:\n${rubricText}` : "",
+    `Candidate response:\n${responseRow.response}`,
+  ].filter((part) => Boolean(part));
+  const userPrompt = promptParts.join("\n\n");
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${apiKey}`,
+    "X-Title": "Caseground",
+  };
+  const referer = process.env.NEXT_PUBLIC_APP_URL;
+  if (referer) {
+    headers["HTTP-Referer"] = referer;
   }
 
   const aiResponse = await fetch(apiUrl, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
+    headers,
     body: JSON.stringify({
-      prompt: question.prompt,
-      rubric: question.rubric,
-      response: responseRow.response,
+      model: defaultModel,
+      temperature: 0.4,
+      max_tokens: 350,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
     }),
   });
 
   const rawText = await aiResponse.text();
-  let feedback = rawText;
+  let parsed: unknown = null;
 
   try {
-    const parsed = JSON.parse(rawText);
-    feedback =
-      parsed.feedback ??
-      parsed.output ??
-      parsed.text ??
-      parsed.message ??
-      parsed?.choices?.[0]?.message?.content ??
-      rawText;
+    parsed = JSON.parse(rawText);
   } catch (_error) {
-    feedback = rawText;
+    parsed = null;
   }
+
+  const content =
+    typeof parsed === "object" && parsed !== null
+      ? (parsed as { choices?: { message?: { content?: string }; text?: string }[] })
+        ?.choices?.[0]?.message?.content ??
+      (parsed as { choices?: { message?: { content?: string }; text?: string }[] })
+        ?.choices?.[0]?.text ??
+      (parsed as { output?: string }).output ??
+      (parsed as { feedback?: string }).feedback ??
+      (parsed as { text?: string }).text ??
+      (parsed as { message?: string }).message ??
+      rawText
+      : rawText;
+
+  const feedback =
+    typeof content === "string" ? content : JSON.stringify(content ?? rawText);
 
   if (!aiResponse.ok) {
-    return NextResponse.json({ error: feedback }, { status: 502 });
+    const errorMessage =
+      typeof parsed === "object" && parsed !== null
+        ? (parsed as { error?: { message?: string } }).error?.message ?? feedback
+        : feedback;
+    return NextResponse.json({ error: errorMessage }, { status: 502 });
   }
 
-  const creditsRemaining = Math.max(0, profile.ai_credits - 1);
+  const cleanedFeedback = feedback.trim();
+
+  if (!cleanedFeedback) {
+    return NextResponse.json(
+      { error: "AI API returned empty feedback." },
+      { status: 502 }
+    );
+  }
 
   const { error: updateResponseError } = await supabase
     .from("user_responses")
-    .update({ ai_feedback: feedback })
+    .update({ ai_feedback: cleanedFeedback })
     .eq("id", responseId)
     .eq("user_id", user.id);
 
@@ -108,6 +201,8 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+
+  const creditsRemaining = Math.max(0, profile.ai_credits - 1);
 
   const { error: updateUserError } = await supabase
     .from("users")
@@ -121,5 +216,5 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({ feedback, creditsRemaining });
+  return NextResponse.json({ feedback: cleanedFeedback, creditsRemaining });
 }

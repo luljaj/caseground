@@ -12,7 +12,7 @@ A Leetcode-style practice platform for business interview prep. Three tracks: Es
 - **Database:** Supabase (Postgres)
 - **Auth:** Supabase Auth (Google OAuth)
 - **Speech:** Web Speech API
-- **AI Feedback:** External API (cheap model, TBD)
+- **AI Feedback:** OpenRouter API (configurable model)
 
 ## Supabase Setup
 
@@ -531,9 +531,10 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 
-# AI Feedback API
+# AI Feedback API (OpenRouter chat completions)
 AI_API_URL=
 AI_API_KEY=
+DEFAULT_MODEL=
 
 # App
 NEXT_PUBLIC_APP_URL=

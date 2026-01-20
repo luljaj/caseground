@@ -35,22 +35,26 @@ export default function ProblemFilters({
   search,
   notDone,
   sort,
+  view,
   onTrackChange,
   onCategoryChange,
   onSearchChange,
   onNotDoneChange,
   onSortChange,
+  onViewChange,
 }: {
   track: Track | "all";
   category: Category | "all";
   search: string;
   notDone: boolean;
   sort: SortParams;
+  view: "list" | "queue";
   onTrackChange: (value: Track | "all") => void;
   onCategoryChange: (value: Category | "all") => void;
   onSearchChange: (value: string) => void;
   onNotDoneChange: (value: boolean) => void;
   onSortChange: (value: SortParams) => void;
+  onViewChange: (value: "list" | "queue") => void;
 }) {
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
 
@@ -200,12 +204,38 @@ export default function ProblemFilters({
           />
         </div>
 
-        {/* Right side filters */}
-        <div className="flex items-center gap-4">
-          {/* Hide completed checkbox */}
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <Checkbox
-              checked={notDone}
+      {/* Right side filters */}
+      <div className="flex items-center gap-4">
+        <div className="flex items-center rounded-full border border-zinc-800 bg-zinc-900/60 p-1 text-[12px] text-zinc-400">
+          <button
+            type="button"
+            onClick={() => onViewChange("list")}
+            className={`rounded-full px-3 py-1 transition-colors ${
+              view === "list"
+                ? "bg-white/10 text-white"
+                : "text-zinc-400 hover:text-white"
+            }`}
+            aria-pressed={view === "list"}
+          >
+            List View
+          </button>
+          <button
+            type="button"
+            onClick={() => onViewChange("queue")}
+            className={`rounded-full px-3 py-1 transition-colors ${
+              view === "queue"
+                ? "bg-white/10 text-white"
+                : "text-zinc-400 hover:text-white"
+            }`}
+            aria-pressed={view === "queue"}
+          >
+            Queue View
+          </button>
+        </div>
+        {/* Hide completed checkbox */}
+        <label className="flex items-center gap-2 cursor-pointer group">
+          <Checkbox
+            checked={notDone}
               onChange={(e) => onNotDoneChange(e.target.checked)}
             />
             <span className="text-[14px] text-zinc-400 group-hover:text-zinc-300 transition-colors">

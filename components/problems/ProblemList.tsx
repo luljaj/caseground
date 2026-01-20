@@ -1,12 +1,26 @@
+"use client";
+
 import type { Question } from "@/types";
 import ProblemRow from "./ProblemRow";
 
 export default function ProblemList({
   questions,
   completedIds,
+  isAddingMode,
+  queuedIds,
+  onToggleQueue,
 }: {
   questions: Question[];
   completedIds: Set<string>;
+  isAddingMode: boolean;
+  queuedIds: Set<string>;
+  onToggleQueue: (questionId: string, meta: {
+    title: string;
+    track: Question["track"];
+    category: Question["category"];
+    suggested_time: number;
+    number: number;
+  }) => void;
 }) {
   if (questions.length === 0) {
     return (
@@ -43,7 +57,7 @@ export default function ProblemList({
         <thead className="bg-zinc-800/40">
           <tr className="border-b border-[#27272a]">
             <th className="w-12 px-4 py-5 sm:w-16 sm:px-8">
-              <span className="sr-only">Status</span>
+              <span className="sr-only">{isAddingMode ? "Queue" : "Status"}</span>
             </th>
             <th className="w-12 px-2 py-5 text-[11px] uppercase tracking-wider text-[#9F9FA9] sm:w-20 sm:px-8">
               #
@@ -65,6 +79,9 @@ export default function ProblemList({
               key={question.id}
               question={question}
               isCompleted={completedIds.has(question.id)}
+              isAddingMode={isAddingMode}
+              isQueued={queuedIds.has(question.id)}
+              onToggleQueue={onToggleQueue}
             />
           ))}
         </tbody>

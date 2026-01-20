@@ -13,7 +13,7 @@ Google OAuth via Supabase Auth is required for saving responses and AI feedback.
 - Tailwind CSS (dark navy theme)
 - Supabase (Postgres + Auth)
 - Web Speech API (speech-to-text)
-- External AI API for feedback (model and provider TBD)
+- OpenRouter API for feedback (model set via `DEFAULT_MODEL`)
 
 ## Project Structure (high level)
 - `app/` App Router pages and API routes
@@ -45,11 +45,14 @@ Google OAuth via Supabase Auth is required for saving responses and AI feedback.
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `AI_API_URL`
    - `AI_API_KEY`
+   - `DEFAULT_MODEL`
    - `NEXT_PUBLIC_APP_URL`
 3. Apply migrations to remote Supabase: `supabase db push`
 4. Run dev server: `npm run dev`
 
 Notes:
+- `AI_API_URL` should point to OpenRouter chat completions (e.g. `https://openrouter.ai/api/v1/chat/completions`).
+- `DEFAULT_MODEL` should be an OpenRouter model id (e.g. `openai/gpt-4o-mini`).
 - Supabase keys are in the Supabase dashboard: Project Settings -> API.
 - Google OAuth must be enabled in Supabase Auth -> Providers -> Google.
 
