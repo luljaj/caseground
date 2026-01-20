@@ -14,7 +14,9 @@ export async function GET() {
 
   const { data: profile, error: profileError } = await supabase
     .from("users")
-    .select("ai_credits")
+    .select(
+      "ai_credits, stripe_subscription_status, subscription_period_end, subscription_cancel_at_period_end"
+    )
     .eq("id", user.id)
     .single();
 
@@ -72,5 +74,10 @@ export async function GET() {
     totalAttempted,
     aiCredits: profile.ai_credits,
     byType,
+    subscription: {
+      status: profile.stripe_subscription_status || "none",
+      periodEnd: profile.subscription_period_end || null,
+      cancelAtPeriodEnd: profile.subscription_cancel_at_period_end || false,
+    },
   });
 }

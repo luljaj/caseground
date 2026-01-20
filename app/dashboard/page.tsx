@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useSettings } from "@/lib/hooks/useSettings";
@@ -8,16 +9,7 @@ import Spinner from "@/components/ui/Spinner";
 import Button from "@/components/ui/Button";
 import TypeBreakdownChart from "@/components/dashboard/TypeBreakdownChart";
 import { cn } from "@/lib/utils/cn";
-
-type StatsPayload = {
-  totalAttempted: number;
-  aiCredits: number;
-  byType: {
-    estimations: number;
-    behaviorals: number;
-    reasoning: number;
-  };
-};
+import type { StatsPayload } from "@/types";
 
 const settingsOptions: Array<{
   key: "autoStartTimer" | "timerSound" | "speechToTextReady" | "showPracticeTips";
@@ -127,12 +119,52 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-surface/60 px-4 py-2.5">
-          <span className="text-xs font-medium uppercase tracking-wider text-text-secondary/60">
-            AI Credits
-          </span>
-          <span className="text-base font-semibold text-text-primary">
-            {stats.aiCredits}
-          </span>
+          {["active", "trialing", "past_due"].includes(
+            stats.subscription.status
+          ) ? (
+            <>
+              <span className="text-xs font-medium uppercase tracking-wider text-violet-400">
+                {stats.subscription.status === "trialing"
+                  ? "Trial"
+                  : "Unlimited"}
+              </span>
+              {stats.subscription.cancelAtPeriodEnd && (
+                <span className="text-xs text-amber-400">Canceling</span>
+              )}
+              <span className="text-xs text-text-secondary">
+                {stats.subscription.periodEnd
+                  ? `${stats.subscription.cancelAtPeriodEnd ? "Ends" : "Renews"} ${new Date(
+                      stats.subscription.periodEnd
+                    ).toLocaleDateString()}`
+                  : "Active"}
+              </span>
+              <button
+                onClick={async () => {
+                  const res = await fetch("/api/stripe/portal", { method: "POST" });
+                  const { url } = await res.json();
+                  if (url) window.location.href = url;
+                }}
+                className="text-xs text-text-muted hover:text-text-secondary transition-colors"
+              >
+                Manage
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="text-xs font-medium uppercase tracking-wider text-text-secondary/60">
+                AI Credits
+              </span>
+              <span className="text-base font-semibold text-text-primary">
+                {stats.aiCredits}
+              </span>
+              <Link
+                href="/pricing"
+                className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+              >
+                Get More
+              </Link>
+            </>
+          )}
         </div>
       </div>
 

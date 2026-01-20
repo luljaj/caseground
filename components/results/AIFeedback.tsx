@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import Button from "@/components/ui/Button";
 import Spinner from "@/components/ui/Spinner";
@@ -10,19 +11,31 @@ export default function AIFeedback({
   responseId,
   initialCredits,
   initialFeedback,
+  isSubscriber = false,
 }: {
   responseId: string;
   initialCredits: number;
   initialFeedback?: string | null;
+  isSubscriber?: boolean;
 }) {
   const [credits, setCredits] = useState(initialCredits);
   const [feedback, setFeedback] = useState(initialFeedback ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryAfter, setRetryAfter] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (retryAfter === null || retryAfter <= 0) return;
+    const timer = setInterval(() => {
+      setRetryAfter((prev) => (prev && prev > 0 ? prev - 1 : null));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [retryAfter]);
 
   const handleFetch = async () => {
     setLoading(true);
     setError(null);
+    setRetryAfter(null);
 
     try {
       const response = await fetch("/api/feedback", {
@@ -33,12 +46,20 @@ export default function AIFeedback({
 
       const payload = await response.json();
 
+      if (response.status === 429) {
+        setRetryAfter(payload.retry_after || 15);
+        setError("Please wait before generating more feedback.");
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(payload.error ?? "Failed to get feedback.");
       }
 
       setFeedback(payload.feedback ?? "");
-      setCredits(payload.creditsRemaining ?? credits - 1);
+      if (payload.creditsRemaining !== null && payload.creditsRemaining !== undefined) {
+        setCredits(payload.creditsRemaining);
+      }
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -70,7 +91,7 @@ export default function AIFeedback({
             )}
           </div>
           <span className="text-xs text-zinc-500">
-            {credits} credits left
+            {isSubscriber ? "Unlimited plan" : `${credits} credits left`}
           </span>
         </div>
 
@@ -92,24 +113,33 @@ export default function AIFeedback({
 
         {(!feedback || showRetry) && (
           <div className="mt-5">
-            <Button
-              size="sm"
-              onClick={handleFetch}
-              disabled={loading || credits <= 0}
-              variant="primary"
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <Spinner size={14} /> Generating...
-                </span>
-              ) : credits <= 0 ? (
-                "No credits remaining"
-              ) : showRetry ? (
-                "Retry feedback"
-              ) : (
-                "Generate Feedback"
-              )}
-            </Button>
+            {credits <= 0 && !isSubscriber ? (
+              <Link
+                href="/pricing"
+                className="text-sm font-medium text-violet-400 underline"
+              >
+                Get Credits
+              </Link>
+            ) : (
+              <Button
+                size="sm"
+                onClick={handleFetch}
+                disabled={loading || retryAfter !== null}
+                variant="primary"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <Spinner size={14} /> Generating...
+                  </span>
+                ) : retryAfter !== null ? (
+                  `Wait ${retryAfter}s`
+                ) : showRetry ? (
+                  "Retry feedback"
+                ) : (
+                  "Generate Feedback"
+                )}
+              </Button>
+            )}
           </div>
         )}
       </div>

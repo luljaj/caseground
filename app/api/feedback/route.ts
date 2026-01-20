@@ -44,19 +44,53 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing response_id." }, { status: 400 });
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from("users")
-    .select("ai_credits")
-    .eq("id", user.id)
-    .single();
+  const { data: deductResult, error: deductError } = await supabase.rpc(
+    "deduct_credit_atomic",
+    { p_user_id: user.id }
+  );
 
-  if (profileError || !profile) {
-    return NextResponse.json({ error: "User profile not found." }, { status: 404 });
+  if (deductError || !deductResult?.success) {
+    const reason = deductResult?.reason || "deduction_failed";
+
+    if (reason === "rate_limited") {
+      return NextResponse.json(
+        {
+          error: "Please wait before generating more feedback.",
+          retry_after: deductResult.retry_after,
+        },
+        { status: 429 }
+      );
+    }
+
+    if (reason === "no_credits") {
+      return NextResponse.json(
+        {
+          error: "No credits remaining.",
+          credits_remaining: 0,
+        },
+        { status: 400 }
+      );
+    }
+
+    if (reason === "monthly_limit_exceeded") {
+      return NextResponse.json(
+        {
+          error: "Monthly usage limit reached. Please try again next month.",
+        },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({ error: "Unable to process request." }, { status: 500 });
   }
 
-  if (profile.ai_credits <= 0) {
-    return NextResponse.json({ error: "No credits remaining." }, { status: 400 });
-  }
+  const wasSubscription = deductResult.is_subscription;
+  const refundCredit = async () => {
+    await supabase.rpc("refund_credit", {
+      p_user_id: user.id,
+      p_was_subscription: wasSubscription,
+    });
+  };
 
   const { data: responseRow, error: responseError } = await supabase
     .from("user_responses")
@@ -66,6 +100,7 @@ export async function POST(request: Request) {
     .single();
 
   if (responseError || !responseRow) {
+    await refundCredit();
     return NextResponse.json({ error: "Response not found." }, { status: 404 });
   }
 
@@ -76,6 +111,7 @@ export async function POST(request: Request) {
     .single();
 
   if (questionError || !question) {
+    await refundCredit();
     return NextResponse.json({ error: "Question not found." }, { status: 404 });
   }
 
@@ -84,6 +120,7 @@ export async function POST(request: Request) {
   const defaultModel = process.env.DEFAULT_MODEL?.trim();
 
   if (!apiUrl || !apiKey || !defaultModel) {
+    await refundCredit();
     return NextResponse.json({ error: "AI API not configured." }, { status: 500 });
   }
 
@@ -173,6 +210,7 @@ Use this structure:
     typeof content === "string" ? content : JSON.stringify(content ?? rawText);
 
   if (!aiResponse.ok) {
+    await refundCredit();
     const errorMessage =
       typeof parsed === "object" && parsed !== null
         ? (parsed as { error?: { message?: string } }).error?.message ?? feedback
@@ -183,6 +221,7 @@ Use this structure:
   const cleanedFeedback = feedback.trim();
 
   if (!cleanedFeedback) {
+    await refundCredit();
     return NextResponse.json(
       { error: "AI API returned empty feedback." },
       { status: 502 }
@@ -196,25 +235,15 @@ Use this structure:
     .eq("user_id", user.id);
 
   if (updateResponseError) {
+    await refundCredit();
     return NextResponse.json(
       { error: updateResponseError.message },
       { status: 500 }
     );
   }
 
-  const creditsRemaining = Math.max(0, profile.ai_credits - 1);
-
-  const { error: updateUserError } = await supabase
-    .from("users")
-    .update({ ai_credits: creditsRemaining })
-    .eq("id", user.id);
-
-  if (updateUserError) {
-    return NextResponse.json(
-      { error: updateUserError.message },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({ feedback: cleanedFeedback, creditsRemaining });
+  return NextResponse.json({
+    feedback: cleanedFeedback,
+    creditsRemaining: wasSubscription ? null : deductResult.credits_remaining,
+  });
 }

@@ -21,6 +21,12 @@ export default function Nav() {
             >
               Dashboard
             </Link>
+            <Link
+              className="transition-colors duration-200 hover:text-text-primary focus-visible:outline-none focus-visible:text-text-primary"
+              href="/pricing"
+            >
+              Pricing
+            </Link>
           </div>
         </div>
         <div className="flex items-center gap-4">

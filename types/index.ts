@@ -41,6 +41,10 @@ export interface User {
   username: string | null;
   ai_credits: number;
   created_at: string;
+  stripe_customer_id?: string | null;
+  stripe_subscription_status: StripeSubscriptionStatus;
+  subscription_period_end?: string | null;
+  subscription_cancel_at_period_end?: boolean;
 }
 
 export interface UserResponse {
@@ -68,3 +72,37 @@ export interface SortParams {
   field: "number" | "track";
   direction: "asc" | "desc";
 }
+
+export type StripeSubscriptionStatus =
+  | "none"
+  | "incomplete"
+  | "incomplete_expired"
+  | "trialing"
+  | "active"
+  | "past_due"
+  | "canceled"
+  | "unpaid"
+  | "paused";
+
+export function hasSubscriptionAccess(status: StripeSubscriptionStatus): boolean {
+  return ["active", "trialing", "past_due"].includes(status);
+}
+
+export interface UserSubscription {
+  status: StripeSubscriptionStatus;
+  periodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+}
+
+export interface StatsPayload {
+  totalAttempted: number;
+  aiCredits: number;
+  byType: {
+    estimations: number;
+    behaviorals: number;
+    reasoning: number;
+  };
+  subscription: UserSubscription;
+}
+
+export type BillingProduct = "credits_50" | "credits_110" | "unlimited";

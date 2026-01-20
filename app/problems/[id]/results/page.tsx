@@ -26,6 +26,7 @@ export default function ResultsPage() {
   const [credits, setCredits] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkedCount, setCheckedCount] = useState(0);
+  const [isSubscriber, setIsSubscriber] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -82,6 +83,27 @@ export default function ResultsPage() {
     }
 
     loadUser();
+    return () => { isMounted = false; };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    let isMounted = true;
+
+    async function checkSubscription() {
+      const res = await fetch("/api/stats");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (isMounted) {
+        setIsSubscriber(
+          ["active", "trialing", "past_due"].includes(
+            data.subscription?.status
+          )
+        );
+      }
+    }
+
+    checkSubscription();
     return () => { isMounted = false; };
   }, [user]);
 
@@ -194,6 +216,7 @@ export default function ResultsPage() {
           responseId={response.id}
           initialCredits={credits}
           initialFeedback={response.ai_feedback}
+          isSubscriber={isSubscriber}
         />
       </div>
 
