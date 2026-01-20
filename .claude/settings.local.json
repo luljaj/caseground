@@ -10,7 +10,9 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(ls -la \"D:\\\\Caseground\\\\app\\\\api\"\" 2>/dev/null | grep -v \"node_modules \")",
       "Bash(npm install:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "mcp__plugin_supabase_supabase__search_docs",
+      "mcp__stripe__search_stripe_documentation"
     ]
   },
   "enableAllProjectMcpServers": true,
