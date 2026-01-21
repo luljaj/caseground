@@ -13,6 +13,8 @@ export async function GET(request: Request) {
       ? nextParam
       : "/problems";
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? origin;
+
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -45,12 +47,12 @@ export async function GET(request: Request) {
     });
 
     if (error) {
-      return NextResponse.redirect(`${origin}/signin?error=expired_link`);
+      return NextResponse.redirect(`${appUrl}/signin?error=expired_link`);
     }
 
     // If this is a password recovery, redirect to reset password page
     if (type === "recovery") {
-      return NextResponse.redirect(`${origin}/reset-password`);
+      return NextResponse.redirect(`${appUrl}/reset-password`);
     }
 
     // For email confirmation, check if user has username
@@ -69,7 +71,7 @@ export async function GET(request: Request) {
       }
     }
 
-    return NextResponse.redirect(`${origin}${nextPath}`);
+    return NextResponse.redirect(`${appUrl}${nextPath}`);
   }
 
   // Handle OAuth code exchange (Google, etc.)
@@ -91,10 +93,10 @@ export async function GET(request: Request) {
         }
       }
 
-      return NextResponse.redirect(`${origin}${nextPath}`);
+      return NextResponse.redirect(`${appUrl}${nextPath}`);
     }
   }
 
   // Return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/signin?error=auth_callback_error`);
+  return NextResponse.redirect(`${appUrl}/signin?error=auth_callback_error`);
 }

@@ -129,12 +129,18 @@ export async function POST(request: Request) {
   // Configurable system prompt via environment variable
   const defaultSystemPrompt = `You are an interview coach providing feedback on case interview responses.
 
-## Instructions
-- Analyze the candidate's response against the rubric criteria
+## Critical Instructions
+- ONLY evaluate what the candidate actually wrote in their response
+- DO NOT attribute any content from the evaluation criteria, rubric, or question context to the candidate
+- If the candidate's response is minimal, nonsensical, or empty, state that clearly
+- Base all feedback exclusively on the candidate's actual words
+
+## Analysis Guidelines
+- Compare the candidate's response against the rubric criteria
 - Provide specific, actionable feedback
 - Use markdown formatting for clear structure
 - Include "Strengths" and "Areas for Improvement" sections
-- Be encouraging but honest
+- Be encouraging, honest and objective - if there are no strengths, say so
 - Keep feedback concise (4-6 key points)
 
 ## Format
@@ -153,12 +159,14 @@ Use this structure:
   const systemPrompt = process.env.AI_SYSTEM_PROMPT || defaultSystemPrompt;
 
   const promptParts = [
-    `Question:\n${question.prompt}`,
-    question.description ? `Description:\n${question.description}` : "",
-    rubricText ? `Rubric:\n${rubricText}` : "",
-    `Candidate response:\n${responseRow.response}`,
+    `# Question`,
+    question.prompt,
+    question.description ? `\n# Context\n${question.description}` : "",
+    rubricText ? `\n# Evaluation Criteria (for your reference only)\n${rubricText}` : "",
+    `\n# CANDIDATE'S ACTUAL RESPONSE (evaluate only this):\n${responseRow.response}`,
+    `\n# Instructions\nProvide feedback ONLY on what the candidate wrote above. Do not attribute any content from the evaluation criteria or question context to the candidate's response.`,
   ].filter((part) => Boolean(part));
-  const userPrompt = promptParts.join("\n\n");
+  const userPrompt = promptParts.join("\n");
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
