@@ -108,3 +108,13 @@ a {
 .animate-fade-up-4 {
   animation: float-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
 }
+
+/* Shimmer animation for card effects */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%) rotate(25deg);
+  }
+  100% {
+    transform: translateX(100%) rotate(25deg);
+  }
+}

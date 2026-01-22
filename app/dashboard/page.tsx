@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { CreditCard } from "@/components/dashboard/CreditCard";
+import { SubscriptionCard } from "@/components/dashboard/SubscriptionCard";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useSettings } from "@/lib/hooks/useSettings";
 import Spinner from "@/components/ui/Spinner";
@@ -16,27 +18,27 @@ const settingsOptions: Array<{
   title: string;
   description: string;
 }> = [
-  {
-    key: "autoStartTimer",
-    title: "Auto-start timers",
-    description: "Begin the countdown as soon as a question opens.",
-  },
-  {
-    key: "timerSound",
-    title: "Timer sound",
-    description: "Play a chime when the timer finishes.",
-  },
-  {
-    key: "speechToTextReady",
-    title: "Speech-to-text ready",
-    description: "Keep voice input ready on question pages.",
-  },
-  {
-    key: "showPracticeTips",
-    title: "Practice tips",
-    description: "Surface short reminders on structure and pacing.",
-  },
-];
+    {
+      key: "autoStartTimer",
+      title: "Auto-start timers",
+      description: "Begin the countdown as soon as a question opens.",
+    },
+    {
+      key: "timerSound",
+      title: "Timer sound",
+      description: "Play a chime when the timer finishes.",
+    },
+    {
+      key: "speechToTextReady",
+      title: "Speech-to-text ready",
+      description: "Keep voice input ready on question pages.",
+    },
+    {
+      key: "showPracticeTips",
+      title: "Practice tips",
+      description: "Surface short reminders on structure and pacing.",
+    },
+  ];
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -79,16 +81,8 @@ export default function DashboardPage() {
   }, [user]);
 
   if (!user) {
-    return (
-      <div className="rounded-md border border-border/80 bg-surface/40 p-6 text-sm text-text-secondary">
-        <p>Sign in to view your progress and stats.</p>
-        <div className="mt-4">
-          <Button size="sm" onClick={() => router.push("/signin")}>
-            Sign in with Google
-          </Button>
-        </div>
-      </div>
-    );
+    router.push("/signin");
+    return;
   }
 
   if (loading) {
@@ -108,89 +102,73 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-8 pb-12">
-      <div className="flex flex-col gap-4 animate-fade-up md:flex-row md:items-center md:justify-between">
-        <div className="flex max-w-xl flex-col gap-2">
-          <h1 className="text-2xl font-semibold text-text-primary">
-            Dashboard
-          </h1>
-          <p className="text-sm text-text-secondary">
-            Track your progress and activity across all question types.
-          </p>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-surface/60 px-4 py-2.5">
-          {["active", "trialing", "past_due"].includes(
-            stats.subscription.status
-          ) ? (
-            <>
-              <span className="text-xs font-medium uppercase tracking-wider text-violet-400">
-                {stats.subscription.status === "trialing"
-                  ? "Trial"
-                  : "Unlimited"}
-              </span>
-              {stats.subscription.cancelAtPeriodEnd && (
-                <span className="text-xs text-amber-400">Canceling</span>
-              )}
-              <span className="text-xs text-text-secondary">
-                {stats.subscription.periodEnd
-                  ? `${stats.subscription.cancelAtPeriodEnd ? "Ends" : "Renews"} ${new Date(
-                      stats.subscription.periodEnd
-                    ).toLocaleDateString()}`
-                  : "Active"}
-              </span>
-              <button
-                onClick={async () => {
+    <div className="mx-auto flex max-w-5xl flex-col gap-6 pb-12">
+      {/* Main Dashboard Card */}
+      <div className="animate-fade-up rounded-3xl bg-zinc-800/50 border border-zinc-700/50 p-6">
+        {/* Subscription & Credits Cards */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <SubscriptionCard
+            status={
+              ["active", "trialing", "past_due"].includes(stats.subscription.status)
+                ? stats.subscription.status === "trialing"
+                  ? "trialing"
+                  : "unlimited"
+                : "free"
+            }
+            periodEnd={stats.subscription.periodEnd}
+            cancelAtPeriodEnd={stats.subscription.cancelAtPeriodEnd}
+            onManage={
+              ["active", "trialing", "past_due"].includes(stats.subscription.status)
+                ? async () => {
                   const res = await fetch("/api/stripe/portal", { method: "POST" });
                   const { url } = await res.json();
                   if (url) window.location.href = url;
-                }}
-                className="text-xs text-text-muted hover:text-text-secondary transition-colors"
-              >
-                Manage
-              </button>
-            </>
-          ) : (
-            <>
-              <span className="text-xs font-medium uppercase tracking-wider text-text-secondary/60">
-                AI Credits
-              </span>
-              <span className="text-base font-semibold text-text-primary">
-                {stats.aiCredits}
-              </span>
-              <Link
-                href="/pricing"
-                className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
-              >
-                Get More
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
+                }
+                : () => router.push("/pricing")
+            }
+          />
 
-      <div
-        className="grid gap-6 animate-fade-up md:grid-cols-2"
-        style={{ animationDelay: "50ms" }}
-      >
-        <div className="rounded-lg border border-white/5 bg-surface/50 p-8 transition-colors hover:bg-surface/60">
-          <div>
-            <h3 className="text-xs font-medium uppercase tracking-wider text-text-secondary/60">
-              Questions Attempted
-            </h3>
-            <p className="mt-4 text-4xl font-semibold text-text-primary">
-              {stats.totalAttempted}
-            </p>
+          <CreditCard
+            title="AI Credits"
+            count={stats.aiCredits}
+            unlimited={["active", "past_due"].includes(stats.subscription.status) && stats.subscription.status !== "trialing"}
+            onAddCredits={
+              !["active", "past_due"].includes(stats.subscription.status)
+                ? () => router.push("/pricing")
+                : undefined
+            }
+          />
+        </div>
+
+        <div className="grid gap-4 mt-4 md:grid-cols-2">
+          <div className="relative group">
+            <div className="relative bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 rounded-3xl overflow-hidden border border-zinc-800 hover:border-zinc-700 transition-all duration-300 hover:scale-[1.01]">
+              {/* Content */}
+              <div className="relative p-6 px-8 h-24 flex items-center">
+                <div className="flex items-center justify-between gap-4 w-full">
+                  <div>
+                    <h3 className="text-white text-xl font-semibold leading-tight group-hover:text-zinc-100 transition-colors">
+                      Questions Attempted
+                    </h3>
+                    <p className="text-zinc-400 text-sm mt-0.5 group-hover:text-zinc-300 transition-colors">
+                      Unique questions answered
+                    </p>
+                  </div>
+                  <div className="text-white text-3xl font-bold tabular-nums">
+                    {stats.totalAttempted}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <p className="mt-4 text-xs text-text-muted">
-            Unique questions answered
-          </p>
-        </div>
 
-        <TypeBreakdownChart {...stats.byType} />
+          <TypeBreakdownChart {...stats.byType} />
+        </div>
       </div>
 
-      <div className="animate-fade-up" style={{ animationDelay: "100ms" }}>
-        <div className="rounded-lg border border-border/80 bg-surface/30 p-8 transition-colors hover:bg-surface/40">
+      {/* Settings Card - Separate */}
+      <div className="animate-fade-up" style={{ animationDelay: "50ms" }}>
+        <div className="rounded-3xl border border-zinc-700/50 bg-zinc-800/50 p-8 transition-colors">
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="text-xs font-medium uppercase tracking-wider text-text-secondary/60">
