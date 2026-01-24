@@ -40,7 +40,7 @@ export default function ProblemRow({
   const title = question.title || "Untitled";
 
   return (
-    <tr className="group relative bg-black/20 transition-all duration-200 hover:bg-white/[0.02] hover:scale-[1.02] hover:-translate-y-1 hover:z-10 hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)] border-t border-[#27272a] hover:border-transparent">
+    <tr className="group relative bg-black/20 transition-all duration-200 hover:bg-white/[0.02] border-t border-[#27272a]">
       {/* Status */}
       <td className="px-4 py-4 sm:px-8">
         <div className="flex items-center justify-start">
@@ -56,11 +56,10 @@ export default function ProblemRow({
                   number: question.number,
                 })
               }
-              className={`inline-flex h-6 w-6 items-center justify-center rounded-full border transition-colors ${
-                isQueued
+              className={`inline-flex h-6 w-6 items-center justify-center rounded-full border transition-colors ${isQueued
                   ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
                   : "border-zinc-700 text-zinc-500 hover:text-white"
-              }`}
+                }`}
               aria-pressed={isQueued}
               aria-label={isQueued ? "Remove from queue" : "Add to queue"}
             >

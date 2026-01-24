@@ -13,7 +13,7 @@ interface ZincCardProps {
 export function ZincCard({ children, accentGlow = false, className = "" }: ZincCardProps) {
     return (
         <div className={`relative group ${className}`}>
-            <div className={`relative bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 rounded-3xl overflow-hidden border transition-all duration-300 hover:scale-[1.01] ${accentGlow
+            <div className={`relative bg-gradient-to-br from-zinc-900 via-zinc-900 to-[#1f1f23] rounded-3xl overflow-hidden border transition-all duration-300 hover:scale-[1.01] ${accentGlow
                 ? "border-violet-500/20 hover:border-violet-500/30"
                 : "border-zinc-800 hover:border-zinc-700"
                 }`}>

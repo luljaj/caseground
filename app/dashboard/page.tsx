@@ -142,7 +142,7 @@ export default function DashboardPage() {
 
         <div className="grid gap-4 mt-4 md:grid-cols-2">
           <div className="relative group">
-            <div className="relative bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 rounded-3xl overflow-hidden border border-zinc-800 hover:border-zinc-700 transition-all duration-300 hover:scale-[1.01]">
+            <div className="relative bg-gradient-to-br from-zinc-900 via-zinc-900 to-[#1f1f23] rounded-3xl overflow-hidden border border-zinc-800 hover:border-zinc-700 transition-all duration-300 hover:scale-[1.01]">
               {/* Content */}
               <div className="relative p-6 px-8 h-24 flex items-center">
                 <div className="flex items-center justify-between gap-4 w-full">
