@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createHash } from "crypto";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function formatRubric(rubric: unknown): string {
@@ -167,6 +168,9 @@ Use this structure:
     `\n# Instructions\nProvide feedback ONLY on what the candidate wrote above. Do not attribute any content from the evaluation criteria or question context to the candidate's response.`,
   ].filter((part) => Boolean(part));
   const userPrompt = promptParts.join("\n");
+  const promptHash = createHash("sha256")
+    .update(`${systemPrompt}\n\n${userPrompt}`)
+    .digest("hex");
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -178,6 +182,7 @@ Use this structure:
     headers["HTTP-Referer"] = referer;
   }
 
+  const startTime = Date.now();
   const aiResponse = await fetch(apiUrl, {
     method: "POST",
     headers,
@@ -191,6 +196,7 @@ Use this structure:
       ],
     }),
   });
+  const generationTime = Date.now() - startTime;
 
   const rawText = await aiResponse.text();
   let parsed: unknown = null;
@@ -216,6 +222,10 @@ Use this structure:
 
   const feedback =
     typeof content === "string" ? content : JSON.stringify(content ?? rawText);
+  const tokensUsed =
+    typeof parsed === "object" && parsed !== null
+      ? (parsed as { usage?: { total_tokens?: number } })?.usage?.total_tokens ?? null
+      : null;
 
   if (!aiResponse.ok) {
     await refundCredit();
@@ -236,6 +246,26 @@ Use this structure:
     );
   }
 
+  const { data: feedbackRow, error: insertError } = await supabase
+    .from("ai_feedback")
+    .insert({
+      user_id: user.id,
+      response_id: responseId,
+      feedback_type: "problem",
+      content: cleanedFeedback,
+      model: defaultModel,
+      tokens_used: tokensUsed,
+      generation_time_ms: generationTime,
+      prompt_hash: promptHash,
+      status: "completed",
+    })
+    .select()
+    .single();
+
+  if (insertError) {
+    console.error("Failed to store ai_feedback row:", insertError);
+  }
+
   const { error: updateResponseError } = await supabase
     .from("user_responses")
     .update({ ai_feedback: cleanedFeedback })
@@ -243,15 +273,12 @@ Use this structure:
     .eq("user_id", user.id);
 
   if (updateResponseError) {
-    await refundCredit();
-    return NextResponse.json(
-      { error: updateResponseError.message },
-      { status: 500 }
-    );
+    console.error("Failed to update user_responses.ai_feedback:", updateResponseError);
   }
 
   return NextResponse.json({
     feedback: cleanedFeedback,
+    feedbackEntry: feedbackRow ?? null,
     creditsRemaining: wasSubscription ? null : deductResult.credits_remaining,
   });
 }

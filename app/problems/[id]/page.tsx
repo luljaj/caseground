@@ -5,7 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useTimer } from "@/lib/hooks/useTimer";
 import { useSpeechToText } from "@/lib/hooks/useSpeechToText";
-import { useQueue } from "@/lib/hooks/useQueue";
+import { useCollection } from "@/lib/hooks/useCollection";
+import { useCustomCollections } from "@/lib/hooks/useCustomCollections";
 import { useSettings } from "@/lib/hooks/useSettings";
 import ProblemCard from "@/components/question/ProblemCard";
 import ResponseInput from "@/components/question/ResponseInput";
@@ -22,13 +23,13 @@ export default function QuestionPage() {
   const { user, signInWithGoogle } = useAuth();
   const { settings } = useSettings();
   const {
-    state: queueState,
+    session,
     currentProblemId,
-    addProblem,
     markCompleted,
-    advanceQueue,
-    setActiveTimerSeconds,
-  } = useQueue();
+    advanceCollection,
+    exitCollection,
+  } = useCollection();
+  const { markComplete } = useCustomCollections();
   const id = params?.id as string;
 
   const [question, setQuestion] = useState<Question | null>(null);
@@ -38,8 +39,6 @@ export default function QuestionPage() {
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [queueNotice, setQueueNotice] = useState<string | null>(null);
-  const queueNoticeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const speechAutoStartRef = useRef<string | null>(null);
 
   const playTimerSound = useCallback(() => {
@@ -71,7 +70,6 @@ export default function QuestionPage() {
   const {
     status: timerStatus,
     start: startTimer,
-    remainingSeconds: remainingTimerSeconds,
   } = timer;
   const {
     isSupported,
@@ -190,55 +188,16 @@ export default function QuestionPage() {
   }, [settings.speechToTextReady, stopListening]);
 
   useEffect(() => {
-    if (!queueState.isPlaying || !questionId || currentProblemId !== questionId) {
-      setActiveTimerSeconds(null);
+    if (!session || !questionId || !currentProblemId) {
       return;
     }
-    setActiveTimerSeconds(remainingTimerSeconds);
-  }, [
-    queueState.isPlaying,
-    currentProblemId,
-    questionId,
-    remainingTimerSeconds,
-    setActiveTimerSeconds,
-  ]);
-
-  useEffect(() => {
-    return () => {
-      setActiveTimerSeconds(null);
-      if (queueNoticeTimeout.current) {
-        clearTimeout(queueNoticeTimeout.current);
-      }
-    };
-  }, [setActiveTimerSeconds]);
-
-  const showQueueNotice = (message: string) => {
-    setQueueNotice(message);
-    if (queueNoticeTimeout.current) {
-      clearTimeout(queueNoticeTimeout.current);
-    }
-    queueNoticeTimeout.current = setTimeout(() => {
-      setQueueNotice(null);
-    }, 2500);
-  };
-
-  const handleAddToQueue = () => {
-    if (!question) {
+    if (!session.problemIds.includes(questionId)) {
       return;
     }
-    if (queueState.problemIds.includes(question.id)) {
-      showQueueNotice("Already in your queue.");
-      return;
+    if (questionId !== currentProblemId) {
+      router.replace(`/problems/${currentProblemId}`);
     }
-    addProblem(question.id, {
-      title: question.title,
-      track: question.track,
-      category: question.category,
-      suggestedTime: question.suggested_time,
-      number: question.number,
-    });
-    showQueueNotice("Added to queue.");
-  };
+  }, [session, questionId, currentProblemId, router]);
 
   const handleSubmit = async () => {
     if (!responseText.trim() || !question || isSubmitting) return;
@@ -267,20 +226,26 @@ export default function QuestionPage() {
 
       const payload = await response.json();
 
-      const isQueueActive =
-        queueState.isPlaying && currentProblemId === question.id;
+      const isCollectionActive = session && currentProblemId === question.id;
 
-      if (isQueueActive) {
-        markCompleted(question.id, payload.id);
-        if (settings.showResultsBetween) {
-          router.push(`/problems/${question.id}/results?response_id=${payload.id}`);
+      if (isCollectionActive && session) {
+        markCompleted(question.id);
+        const nextId = session.problemIds[session.currentIndex + 1];
+        if (nextId) {
+          advanceCollection();
+          router.push(`/problems/${nextId}`);
           return;
         }
-        const nextId = queueState.problemIds[queueState.currentIndex + 1];
-        advanceQueue();
-        if (nextId) {
-          router.push(`/problems/${nextId}`);
+
+        if (session.isCustom) {
+          markComplete(session.collectionId, true);
+          exitCollection();
+          router.push("/collections");
+          return;
         }
+
+        exitCollection();
+        router.push(`/collections/${session.collectionSlug}/complete`);
         return;
       }
 
@@ -330,9 +295,6 @@ export default function QuestionPage() {
         <div className="flex items-center justify-between pb-4">
           <span className="text-[13px] font-medium text-text-secondary">Response</span>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="ghost" onClick={handleAddToQueue}>
-              Add to Queue
-            </Button>
             <SpeechToggle
               supported={isSupported}
               isListening={isListening}
@@ -360,10 +322,6 @@ export default function QuestionPage() {
             </button>
           </div>
         )}
-
-        {queueNotice ? (
-          <p className="pb-3 text-xs text-emerald-400">{queueNotice}</p>
-        ) : null}
 
         {/* Textarea */}
         <div className="flex-1">

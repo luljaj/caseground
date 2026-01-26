@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import Button from "@/components/ui/Button";
 import Spinner from "@/components/ui/Spinner";
+import FeedbackHistory from "@/components/results/FeedbackHistory";
 import { cn } from "@/lib/utils/cn";
+import type { AIFeedback as AIFeedbackEntry } from "@/types";
 
 export default function AIFeedback({
   responseId,
@@ -20,9 +22,82 @@ export default function AIFeedback({
 }) {
   const [credits, setCredits] = useState(initialCredits);
   const [feedback, setFeedback] = useState(initialFeedback ?? "");
+  const [feedbackEntries, setFeedbackEntries] = useState<AIFeedbackEntry[]>([]);
+  const [activeFeedbackId, setActiveFeedbackId] = useState<string | null>(null);
+  const [activeMeta, setActiveMeta] = useState<{
+    createdAt: string | null;
+    model: string | null;
+    tokensUsed: number | null;
+    generationTimeMs: number | null;
+  }>({
+    createdAt: null,
+    model: null,
+    tokensUsed: null,
+    generationTimeMs: null,
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryAfter, setRetryAfter] = useState<number | null>(null);
+
+  const applyActiveEntry = useCallback((entry: AIFeedbackEntry | null) => {
+    if (!entry) {
+      setActiveFeedbackId(null);
+      setActiveMeta({
+        createdAt: null,
+        model: null,
+        tokensUsed: null,
+        generationTimeMs: null,
+      });
+      return;
+    }
+
+    setActiveFeedbackId(entry.id);
+    setActiveMeta({
+      createdAt: entry.created_at ?? null,
+      model: entry.model ?? null,
+      tokensUsed: entry.tokens_used ?? null,
+      generationTimeMs: entry.generation_time_ms ?? null,
+    });
+    setFeedback(entry.content ?? "");
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadHistory() {
+      const response = await fetch(`/api/feedback/response/${responseId}`, {
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        if (!isMounted) return;
+        setFeedbackEntries([]);
+        setFeedback(initialFeedback ?? "");
+        applyActiveEntry(null);
+        return;
+      }
+
+      const payload = await response.json();
+      const entries = (payload.feedback ?? []) as AIFeedbackEntry[];
+
+      if (!isMounted) return;
+
+      if (entries.length > 0) {
+        setFeedbackEntries(entries);
+        applyActiveEntry(entries[0]);
+        return;
+      }
+
+      setFeedbackEntries([]);
+      setFeedback(initialFeedback ?? "");
+      applyActiveEntry(null);
+    }
+
+    loadHistory();
+    return () => {
+      isMounted = false;
+    };
+  }, [responseId, initialFeedback, applyActiveEntry]);
 
   useEffect(() => {
     if (retryAfter === null || retryAfter <= 0) return;
@@ -57,6 +132,16 @@ export default function AIFeedback({
       }
 
       setFeedback(payload.feedback ?? "");
+      if (payload.feedbackEntry) {
+        const entry = payload.feedbackEntry as AIFeedbackEntry;
+        setFeedbackEntries((prev) => {
+          const filtered = prev.filter((item) => item.id !== entry.id);
+          return [entry, ...filtered];
+        });
+        applyActiveEntry(entry);
+      } else {
+        applyActiveEntry(null);
+      }
       if (payload.creditsRemaining !== null && payload.creditsRemaining !== undefined) {
         setCredits(payload.creditsRemaining);
       }
@@ -67,6 +152,14 @@ export default function AIFeedback({
     }
   };
 
+  const metadataLabel = activeMeta.createdAt
+    ? `Generated ${new Date(activeMeta.createdAt).toLocaleString()}`
+    : "";
+  const modelLabel = activeMeta.model ? ` | ${activeMeta.model}` : "";
+  const usageLabel =
+    activeMeta.tokensUsed || activeMeta.generationTimeMs
+      ? ` | ${activeMeta.tokensUsed ?? "?"} tokens | ${activeMeta.generationTimeMs ?? "?"}ms`
+      : "";
   const showRetry = Boolean(error) && !feedback;
 
   return (
@@ -94,6 +187,13 @@ export default function AIFeedback({
             {isSubscriber ? "Unlimited plan" : `${credits} credits left`}
           </span>
         </div>
+        {metadataLabel && (
+          <p className="mt-1 text-[11px] text-zinc-500">
+            {metadataLabel}
+            {modelLabel}
+            {usageLabel}
+          </p>
+        )}
 
         <div className="mt-4 text-[15px] leading-relaxed">
           {feedback ? (
@@ -110,6 +210,12 @@ export default function AIFeedback({
         {error && (
           <p className="mt-3 text-xs text-error bg-error/10 p-2 rounded-lg">{error}</p>
         )}
+
+        <FeedbackHistory
+          entries={feedbackEntries}
+          activeId={activeFeedbackId}
+          onSelect={(entry) => applyActiveEntry(entry)}
+        />
 
         {(!feedback || showRetry) && (
           <div className="mt-5">

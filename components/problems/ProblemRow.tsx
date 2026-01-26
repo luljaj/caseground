@@ -21,21 +21,9 @@ const trackConfig: Record<Question["track"], { label: string; color: string }> =
 export default function ProblemRow({
   question,
   isCompleted,
-  isAddingMode,
-  isQueued,
-  onToggleQueue,
 }: {
   question: Question;
   isCompleted: boolean;
-  isAddingMode: boolean;
-  isQueued: boolean;
-  onToggleQueue: (questionId: string, meta: {
-    title: string;
-    track: Question["track"];
-    category: Question["category"];
-    suggested_time: number;
-    number: number;
-  }) => void;
 }) {
   const title = question.title || "Untitled";
 
@@ -44,57 +32,7 @@ export default function ProblemRow({
       {/* Status */}
       <td className="px-4 py-4 sm:px-8">
         <div className="flex items-center justify-start">
-          {isAddingMode ? (
-            <button
-              type="button"
-              onClick={() =>
-                onToggleQueue(question.id, {
-                  title,
-                  track: question.track,
-                  category: question.category,
-                  suggested_time: question.suggested_time,
-                  number: question.number,
-                })
-              }
-              className={`inline-flex h-6 w-6 items-center justify-center rounded-full border transition-colors ${isQueued
-                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
-                  : "border-zinc-700 text-zinc-500 hover:text-white"
-                }`}
-              aria-pressed={isQueued}
-              aria-label={isQueued ? "Remove from queue" : "Add to queue"}
-            >
-              {isQueued ? (
-                <svg
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  className="h-3 w-3"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M2.5 6L5 8.5L9.5 3.5"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  className="h-3 w-3"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M6 2.5V9.5M2.5 6H9.5"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              )}
-            </button>
-          ) : isCompleted ? (
+          {isCompleted ? (
             <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
               <svg
                 viewBox="0 0 12 12"

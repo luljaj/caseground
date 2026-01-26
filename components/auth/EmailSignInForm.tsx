@@ -49,16 +49,16 @@ export function EmailSignInForm({ nextPath }: EmailSignInFormProps) {
         return;
       }
 
-      // Check if user has a username
+      // Check onboarding completion
       const { data: session } = await supabase.auth.getSession();
       if (session?.session?.user) {
         const { data: profile } = await supabase
           .from("users")
-          .select("username")
+          .select("onboarding_completed_at")
           .eq("id", session.session.user.id)
           .single();
 
-        if (!profile?.username) {
+        if (!profile?.onboarding_completed_at) {
           router.push(`/onboarding?next=${encodeURIComponent(nextPath || "/problems")}`);
           return;
         }

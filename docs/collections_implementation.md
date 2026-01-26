@@ -15,6 +15,7 @@ Replace the current queue system with a unified **Collections** system:
 | Terminology | "Collection" (not Course, not Queue) |
 | **Collection Completion** | Boolean — has the user finished this collection? |
 | **Collection Attempted** | Percentage — how many constituent problems has user ever completed? |
+| **Problem limit** | Maximum 20 problems per collection |
 | Completion condition | User must play through entire collection AND have 100% Collection Attempted |
 | Skip behavior | Moves to next problem; allowed if problem already completed elsewhere |
 | Progress persistence | `sessionStorage` — survives refresh, cleared on navigation away |
@@ -55,7 +56,7 @@ CREATE TABLE IF NOT EXISTS public.collections (
   difficulty text DEFAULT 'intermediate',  -- 'beginner', 'intermediate', 'advanced'
   
   -- Content
-  problem_ids uuid[] NOT NULL DEFAULT '{}', -- Ordered list of question IDs
+  problem_ids uuid[] NOT NULL DEFAULT '{}', -- Ordered list of question IDs (max 20)
   estimated_time_minutes integer,
   
   -- Display
@@ -65,7 +66,10 @@ CREATE TABLE IF NOT EXISTS public.collections (
   
   -- Metadata
   created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
+  updated_at timestamptz DEFAULT now(),
+  
+  -- Constraints
+  CONSTRAINT max_problems CHECK (array_length(problem_ids, 1) <= 20 OR problem_ids = '{}')
 );
 
 -- Indexes
@@ -203,7 +207,7 @@ export interface CollectionSession {
 export interface CustomCollection {
   id: string;                             // Generated UUID
   name: string;
-  problem_ids: string[];
+  problem_ids: string[];                  // Max 20 problems
   created_at: string;
   is_complete: boolean;                   // Has user completed this custom collection
 }
@@ -496,6 +500,24 @@ interface CollectionSession {
 - When user reaches this page, insert into `user_collection_completions` table
 - Clear collection session from `sessionStorage`
 
+**AI Feedback Dependency:**
+
+> ⚠️ **Important:** The completion page requires AI feedback to be stored in Supabase so it can be retrieved and displayed in the tabbed results view.
+
+Currently, AI feedback is stored in `user_responses.ai_feedback`. This works, but has limitations:
+- No history of regenerations
+- No metadata (model used, tokens, generation time)
+
+**Recommended:** Implement the `ai_feedback` table as outlined in `ai_feedback_storage_plan.md` before or alongside this feature. This will:
+- Allow feedback retrieval by `response_id`
+- Support future collection-level feedback summaries
+- Track feedback generation metadata
+
+**Minimum Requirement for Collections:**
+- Each `user_responses` row must have `ai_feedback` populated (either via existing column or new table)
+- The completion page fetches responses for all problems in the collection and displays any available feedback
+- If feedback is not yet generated, show a "Generate AI Feedback" button per problem
+
 ---
 
 ### Collections Page (`/collections`)
@@ -621,11 +643,65 @@ interface CollectionSession {
 |------|---------|
 | `types/index.ts` | Add collection + preference types |
 | `app/dashboard/page.tsx` | Add onboarding trigger, completed collections |
-| `app/layout.tsx` | Replace QueueProvider with CollectionProvider |
-| `components/layout/Nav.tsx` | Add Collections link, remove Queue |
-| `app/problems/page.tsx` | Remove queue view toggle |
-| `app/problems/[id]/page.tsx` | Update for collection mode |
-| `app/problems/[id]/results/page.tsx` | Update for collection flow |
+| `app/layout.tsx` | Remove QueueProvider + QueueOverlay, add CollectionProvider |
+| `components/layout/Nav.tsx` | Add Collections link |
+| `app/problems/page.tsx` | Remove all queue functionality (imports, state, handlers, views) |
+| `components/problems/ProblemFilters.tsx` | Remove view toggle (List View / Queue View buttons) |
+| `components/problems/ProblemList.tsx` | Remove queue-related props (isAddingMode, queuedIds, onToggleQueue) |
+| `components/problems/ProblemRow.tsx` | Remove queue button logic and props |
+| `app/problems/[id]/page.tsx` | Remove queue integration (useQueue hook, "Add to Queue" button, advancement logic) |
+| `app/problems/[id]/results/page.tsx` | Remove queue advancement and indicator |
+
+### Detailed Queue Removal Changes
+
+**app/problems/page.tsx:**
+- Remove imports: `QueueView`, `AddToQueueBanner`, `useQueue`
+- Remove state: `view`, all queue-related state from `useQueue` hook
+- Remove functions: `handleAddToQueue`, `handleStartQueue`
+- Remove computed values: `isQueueView`, `filteredQueueIds`, `hasResumeState`
+- Remove JSX: `<QueueView>`, `<AddToQueueBanner>`, view toggle effects
+- Keep only: `ProblemList` component, no queue-related props
+
+**components/problems/ProblemFilters.tsx:**
+- Remove prop: `view: "list" | "queue"`
+- Remove prop: `onViewChange`
+- Remove JSX: Lines 209-234 (the "List View" / "Queue View" toggle buttons)
+- Keep all other filters (track, category, search, notDone, sort)
+
+**components/problems/ProblemList.tsx:**
+- Remove prop: `isAddingMode`
+- Remove prop: `queuedIds`
+- Remove prop: `onToggleQueue`
+- Update thead text from `{isAddingMode ? "Queue" : "Status"}` to just `"Status"`
+- Pass only `isCompleted` to ProblemRow
+
+**components/problems/ProblemRow.tsx:**
+- Remove prop: `isAddingMode`
+- Remove prop: `isQueued`
+- Remove prop: `onToggleQueue`
+- Remove JSX: Lines 47-96 (the queue add/remove button logic)
+- Keep only: completion status indicator
+
+**app/problems/[id]/page.tsx:**
+- Remove import: `useQueue`
+- Remove all queue state destructuring
+- Remove state: `queueNotice`, `queueNoticeTimeout`
+- Remove function: `handleAddToQueue`, `showQueueNotice`
+- Remove queue advancement logic in `handleSubmit`
+- Remove JSX: "Add to Queue" button, queue notice display
+
+**app/problems/[id]/results/page.tsx:**
+- Remove import: `useQueue`
+- Remove all queue state destructuring
+- Remove queue advancement logic in auto-advance effect
+- Remove JSX: Queue indicator section
+
+**app/layout.tsx:**
+- Remove import: `QueueProvider`, `QueueOverlay`
+- Remove `<QueueProvider>` wrapper
+- Remove `<QueueOverlay />` component
+- Add `<CollectionProvider>` wrapper
+- Add `<CollectionOverlay />` component
 
 ---
 
@@ -647,19 +723,27 @@ interface CollectionSession {
 
 1. **Database migration** — Collections table + user_collection_completions table
 2. **Types** — Add TypeScript definitions (Collection, CollectionSession, etc.)
-3. **Remove queue system** — Delete all queue files
+3. **Remove queue system** — Complete removal in this order:
+   - Delete all queue component files (QueueView, QueueOverlay, AddToQueueBanner, etc.)
+   - Delete queue context and hooks (QueueContext, useQueue)
+   - Remove queue imports and logic from app/layout.tsx
+   - Remove queue functionality from app/problems/page.tsx (view toggle, handlers)
+   - Remove queue toggle from ProblemFilters.tsx
+   - Remove queue props from ProblemList.tsx and ProblemRow.tsx
+   - Remove queue logic from app/problems/[id]/page.tsx (Add to Queue button)
+   - Remove queue logic from app/problems/[id]/results/page.tsx
 4. **Session hook** — `useCollectionSession` for sessionStorage management
 5. **Collection context/hooks** — Core state management
 6. **API routes** — Collections CRUD + complete endpoint
 7. **Collections page** — Listing with sections
 8. **Collection detail page** — View + Start
 9. **Collection overlay** — Minimizable overlay during collection flow
-10. **Problem page updates** — Auto-advance on submit (no results shown)
+10. **Problem page updates** — Update for collection mode (auto-advance on submit)
 11. **Completion page** — Tabbed results view
 12. **Onboarding modal** — 2-step flow (see onboarding_implementation.md)
 13. **Dashboard updates** — Completed collections section + preferences
 14. **Custom collections** — Create + manage in localStorage
-15. **Nav updates** — Add Collections, remove queue references
+15. **Nav updates** — Add Collections link
 
 ---
 
@@ -686,13 +770,54 @@ interface CollectionSession {
 
 ---
 
+## Dependencies
+
+| Dependency | Description | Plan Reference |
+|------------|-------------|----------------|
+| **AI Feedback Storage** | Completion page displays AI feedback for each problem. Feedback must be saved to Supabase (not just shown transiently). | `ai_feedback_storage_plan.md` |
+| **Onboarding Flow** | Collections uses `target_role` from onboarding for recommendations. | `onboarding_implementation.md` |
+
+**AI Feedback Storage Options:**
+
+1. **Minimal (use existing):** Continue using `user_responses.ai_feedback` column. Works but no history/metadata.
+2. **Recommended (new table):** Implement `ai_feedback` table per `ai_feedback_storage_plan.md`. Enables feedback history, metadata tracking, and future collection-level summaries.
+
+---
+
 ## Notes
 
-- This replaces the entire queue system
-- All "queue" terminology becomes "collection"
-- Queue overlay → Collection overlay (minimizable)
-- Queue view on /problems → removed
-- Custom collections = what queues used to be (localStorage)
-- Pre-made collections = curated by you (database)
-- No separate exit page — exit just returns to /collections
-- No individual problem results during collection — all shown at end
+### Queue to Collections Migration
+
+This plan **completely removes and replaces** the queue system:
+
+**What's Being Removed:**
+- All queue components (`QueueView`, `QueueOverlay`, `QueueCard`, `AddToQueueBanner`, etc.)
+- Queue context and hooks (`QueueContext`, `useQueue`)
+- "Queue View" toggle on /problems page
+- "Add to Queue" functionality on individual problems
+- Queue advancement logic in problem pages
+- All localStorage queue state
+
+**What's Being Added:**
+- Collections system (pre-made curated problem sets in database)
+- Custom collections (user-created problem sets in localStorage)
+- Collection overlay during active collection (minimizable)
+- Collection completion tracking in database
+- Collection-level feedback and results
+
+**Key Terminology Changes:**
+- Queue → Collection
+- Queue overlay → Collection overlay
+- Queue view → Removed (collections are their own page)
+- Custom queue → Custom collection
+
+**Architectural Changes:**
+- Pre-made collections = curated problem sets (Supabase `collections` table)
+- Custom collections = user-created sets (localStorage)
+- Session state = in `sessionStorage` (survives refresh, cleared on exit)
+- Completion tracking = in Supabase `user_collection_completions` table
+
+**UX Changes:**
+- No separate exit page — exit returns to /collections
+- No individual problem results during collection — all shown on completion page
+- **AI feedback must be saved to Supabase** for completion page to display results

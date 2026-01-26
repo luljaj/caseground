@@ -306,13 +306,20 @@ For collections, feedback summarizes performance across all problems in the coll
 
 ### New/Modified API Routes
 
-| Route | Method | Purpose |
-|-------|--------|---------|
-| `POST /api/feedback` | POST | Generate problem feedback (modify existing) |
-| `GET /api/feedback/[id]` | GET | Get specific feedback by ID |
-| `GET /api/feedback/response/[responseId]` | GET | Get all feedback for a response |
-| `POST /api/feedback/collection` | POST | Generate collection-level feedback |
-| `GET /api/feedback/collection/[collectionId]` | GET | Get feedback for a collection |
+| Route | Method | Auth | Credits | Purpose |
+|-------|--------|------|---------|---------|
+| `POST /api/feedback` | POST | ✅ Required | 1 credit | Generate problem feedback (modify existing) |
+| `GET /api/feedback/[id]` | GET | ✅ Required | Free | Get specific feedback by ID |
+| `GET /api/feedback/response/[responseId]` | GET | ✅ Required | Free | Get all feedback for a response |
+| `POST /api/feedback/collection` | POST | ✅ Required | **1 credit** | Generate collection-level feedback |
+| `GET /api/feedback/collection/[collectionId]` | GET | ✅ Required | Free | Get feedback for a collection |
+
+### Credit Cost
+
+| Feedback Type | Credit Cost | Rationale |
+|---------------|-------------|-----------|
+| Problem feedback | 1 credit | Single problem analysis |
+| **Collection feedback** | **1 credit** | Aggregate analysis (higher token usage but same cost to user) |
 
 ### Modified `/api/feedback/route.ts`
 
@@ -350,19 +357,333 @@ await supabase
   .eq('user_id', user.id);
 ```
 
-### New `/api/feedback/collection/route.ts`
+### New `/api/feedback/collection/route.ts` — Full Implementation
 
 ```typescript
-// Generates aggregate feedback for a completed collection
-// Input: { collection_id: string }
-// 
-// Process:
-// 1. Verify user completed the collection
-// 2. Fetch all user_responses for problems in collection
-// 3. Build aggregate prompt with all responses + rubrics
-// 4. Call AI for summary feedback
-// 5. Store in ai_feedback with feedback_type = 'collection'
+import { NextResponse } from "next/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+export async function POST(request: Request) {
+  const supabase = await createSupabaseServerClient();
+  
+  // ============================================
+  // 1. AUTHENTICATION
+  // ============================================
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // ============================================
+  // 2. PARSE REQUEST
+  // ============================================
+  const body = await request.json();
+  const collectionId = body?.collection_id as string | undefined;
+
+  if (!collectionId) {
+    return NextResponse.json(
+      { error: "Missing collection_id." },
+      { status: 400 }
+    );
+  }
+
+  // ============================================
+  // 3. DEDUCT CREDIT (1 credit for collection feedback)
+  // ============================================
+  const { data: deductResult, error: deductError } = await supabase.rpc(
+    "deduct_credit_atomic",
+    { p_user_id: user.id }
+  );
+
+  if (deductError || !deductResult?.success) {
+    const reason = deductResult?.reason || "deduction_failed";
+
+    if (reason === "rate_limited") {
+      return NextResponse.json(
+        {
+          error: "Please wait before generating more feedback.",
+          retry_after: deductResult.retry_after,
+        },
+        { status: 429 }
+      );
+    }
+
+    if (reason === "no_credits") {
+      return NextResponse.json(
+        { error: "No credits remaining.", credits_remaining: 0 },
+        { status: 400 }
+      );
+    }
+
+    if (reason === "monthly_limit_exceeded") {
+      return NextResponse.json(
+        { error: "Monthly usage limit reached. Please try again next month." },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: "Unable to process request." },
+      { status: 500 }
+    );
+  }
+
+  const wasSubscription = deductResult.is_subscription;
+  const refundCredit = async () => {
+    await supabase.rpc("refund_credit", {
+      p_user_id: user.id,
+      p_was_subscription: wasSubscription,
+    });
+  };
+
+  // ============================================
+  // 4. VERIFY COLLECTION EXISTS & USER COMPLETED IT
+  // ============================================
+  const { data: collection, error: collectionError } = await supabase
+    .from("collections")
+    .select("id, name, problem_ids")
+    .eq("id", collectionId)
+    .single();
+
+  if (collectionError || !collection) {
+    await refundCredit();
+    return NextResponse.json(
+      { error: "Collection not found." },
+      { status: 404 }
+    );
+  }
+
+  // Check if user has completed this collection
+  const { data: completion } = await supabase
+    .from("user_collection_completions")
+    .select("completed_at")
+    .eq("user_id", user.id)
+    .eq("collection_id", collectionId)
+    .single();
+
+  if (!completion) {
+    await refundCredit();
+    return NextResponse.json(
+      { error: "You must complete the collection before requesting feedback." },
+      { status: 400 }
+    );
+  }
+
+  // ============================================
+  // 5. FETCH ALL USER RESPONSES FOR COLLECTION PROBLEMS
+  // ============================================
+  const problemIds = collection.problem_ids as string[];
+  
+  const { data: responses, error: responsesError } = await supabase
+    .from("user_responses")
+    .select(`
+      id,
+      question_id,
+      response,
+      ai_feedback,
+      questions!inner (
+        title,
+        prompt,
+        rubric
+      )
+    `)
+    .eq("user_id", user.id)
+    .in("question_id", problemIds)
+    .order("created_at", { ascending: true });
+
+  if (responsesError || !responses || responses.length === 0) {
+    await refundCredit();
+    return NextResponse.json(
+      { error: "No responses found for this collection." },
+      { status: 404 }
+    );
+  }
+
+  // ============================================
+  // 6. BUILD AGGREGATE PROMPT
+  // ============================================
+  const systemPrompt = `You are an interview coach providing aggregate feedback on a completed case interview practice collection.
+
+## Instructions
+- Analyze the user's performance across ALL problems in this collection
+- Identify patterns: consistent strengths and recurring weaknesses
+- Provide actionable recommendations for improvement
+- Be encouraging but honest
+- Keep the summary concise (max 500 words)
+
+## Format
+Use this structure:
+
+### Overall Performance
+[1-2 sentence summary of overall performance]
+
+### Consistent Strengths
+- [strength 1]
+- [strength 2]
+
+### Areas for Improvement
+- [improvement 1]
+- [improvement 2]
+
+### Recommended Next Steps
+[2-3 specific actions the user should take]`;
+
+  // Build user prompt with all responses
+  let userPrompt = `# Collection: ${collection.name}\n\n`;
+  userPrompt += `The user completed ${responses.length} problems. Here are their responses and any individual feedback received:\n\n`;
+
+  responses.forEach((r, index) => {
+    const question = r.questions as { title: string; prompt: string };
+    userPrompt += `## Problem ${index + 1}: ${question.title}\n`;
+    userPrompt += `**Question:** ${question.prompt.slice(0, 200)}...\n\n`;
+    userPrompt += `**User's Response:**\n${r.response.slice(0, 500)}${r.response.length > 500 ? '...' : ''}\n\n`;
+    if (r.ai_feedback) {
+      userPrompt += `**Individual Feedback Summary:**\n${r.ai_feedback.slice(0, 300)}...\n\n`;
+    }
+    userPrompt += `---\n\n`;
+  });
+
+  userPrompt += `\nProvide aggregate feedback analyzing patterns across all ${responses.length} problems.`;
+
+  // ============================================
+  // 7. CALL AI API
+  // ============================================
+  const apiUrl = process.env.AI_API_URL;
+  const apiKey = process.env.AI_API_KEY;
+  const defaultModel = process.env.DEFAULT_MODEL?.trim();
+
+  if (!apiUrl || !apiKey || !defaultModel) {
+    await refundCredit();
+    return NextResponse.json(
+      { error: "AI API not configured." },
+      { status: 500 }
+    );
+  }
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${apiKey}`,
+    "X-Title": "Caseground",
+  };
+
+  const referer = process.env.NEXT_PUBLIC_APP_URL;
+  if (referer) {
+    headers["HTTP-Referer"] = referer;
+  }
+
+  const startTime = Date.now();
+
+  const aiResponse = await fetch(apiUrl, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      model: defaultModel,
+      temperature: 0.4,
+      max_tokens: 600, // Slightly higher for collection summary
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+    }),
+  });
+
+  const generationTime = Date.now() - startTime;
+  const rawText = await aiResponse.text();
+
+  let parsed: unknown = null;
+  try {
+    parsed = JSON.parse(rawText);
+  } catch {
+    parsed = null;
+  }
+
+  // Extract content from various AI response formats
+  const content =
+    typeof parsed === "object" && parsed !== null
+      ? (parsed as { choices?: { message?: { content?: string } }[] })
+          ?.choices?.[0]?.message?.content ?? rawText
+      : rawText;
+
+  const feedback =
+    typeof content === "string" ? content : JSON.stringify(content ?? rawText);
+
+  if (!aiResponse.ok) {
+    await refundCredit();
+    return NextResponse.json(
+      { error: "AI API error. Please try again." },
+      { status: 502 }
+    );
+  }
+
+  const cleanedFeedback = feedback.trim();
+
+  if (!cleanedFeedback) {
+    await refundCredit();
+    return NextResponse.json(
+      { error: "AI API returned empty feedback." },
+      { status: 502 }
+    );
+  }
+
+  // ============================================
+  // 8. STORE IN AI_FEEDBACK TABLE
+  // ============================================
+  const { data: feedbackRow, error: insertError } = await supabase
+    .from("ai_feedback")
+    .insert({
+      user_id: user.id,
+      collection_id: collectionId,
+      response_id: null, // Not a problem-level feedback
+      feedback_type: "collection",
+      content: cleanedFeedback,
+      model: defaultModel,
+      tokens_used:
+        (parsed as { usage?: { total_tokens?: number } })?.usage?.total_tokens ?? null,
+      generation_time_ms: generationTime,
+      status: "completed",
+    })
+    .select()
+    .single();
+
+  if (insertError) {
+    // Don't refund — feedback was generated, just storage failed
+    console.error("Failed to store collection feedback:", insertError);
+    // Still return the feedback to user
+  }
+
+  // ============================================
+  // 9. RETURN RESPONSE
+  // ============================================
+  return NextResponse.json({
+    feedback: cleanedFeedback,
+    feedback_id: feedbackRow?.id ?? null,
+    creditsRemaining: wasSubscription ? null : deductResult.credits_remaining,
+  });
+}
 ```
+
+### Error Handling Patterns
+
+| Error Scenario | HTTP Status | Response |
+|---------------|-------------|----------|
+| Not authenticated | 401 | `{ error: "Unauthorized" }` |
+| Missing required field | 400 | `{ error: "Missing collection_id." }` |
+| No credits | 400 | `{ error: "No credits remaining.", credits_remaining: 0 }` |
+| Rate limited | 429 | `{ error: "Please wait...", retry_after: N }` |
+| Collection not found | 404 | `{ error: "Collection not found." }` |
+| Collection not completed | 400 | `{ error: "You must complete the collection..." }` |
+| AI API error | 502 | `{ error: "AI API error. Please try again." }` |
+| AI returns empty | 502 | `{ error: "AI API returned empty feedback." }` |
+
+### Refund Logic
+
+Credits are refunded if the failure occurs **before** AI generation completes:
+- ✅ Refund: Auth failure, validation failure, collection not found, AI API error
+- ❌ No refund: Storage failure after successful AI generation (user still gets feedback)
 
 ---
 
@@ -407,30 +728,88 @@ ON CONFLICT DO NOTHING;
 
 ## Phase 6: Collection Feedback Feature
 
+### Credit Cost
+
+| Type | Cost | Rationale |
+|------|------|-----------|
+| **Collection feedback** | **1 credit** | Same as individual problem feedback — keeps pricing simple for users |
+
 ### When to Generate Collection Feedback
 
 Collection-level feedback is generated when:
 1. User completes all problems in a collection
 2. User explicitly requests collection feedback (button on completion page)
 
+**Note:** Collection feedback is **on-demand only** — not automatically generated. This:
+- Saves credits for users who don't want aggregate feedback
+- Gives users control over when to use credits
+- Reduces unnecessary AI API costs
+
+### Token Budget
+
+| Component | Max Tokens | Notes |
+|-----------|------------|-------|
+| System prompt | ~200 | Fixed instruction set |
+| User prompt (per problem) | ~300 | Truncated response + feedback excerpts |
+| User prompt (total, 8 problems) | ~2,400 | Keeps within context limits |
+| AI response | 600 | `max_tokens: 600` in API call |
+| **Total context** | ~3,200 | Well within model limits |
+
+**Truncation Strategy:**
+- User response: First 500 characters + "..."
+- Individual feedback: First 300 characters + "..."
+- Question prompt: First 200 characters + "..."
+
 ### Collection Feedback Prompt Template
 
+**System Prompt:**
+```
+You are an interview coach providing aggregate feedback on a completed case interview practice collection.
+
+## Instructions
+- Analyze the user's performance across ALL problems in this collection
+- Identify patterns: consistent strengths and recurring weaknesses
+- Provide actionable recommendations for improvement
+- Be encouraging but honest
+- Keep the summary concise (max 500 words)
+
+## Format
+Use this structure:
+
+### Overall Performance
+[1-2 sentence summary of overall performance]
+
+### Consistent Strengths
+- [strength 1]
+- [strength 2]
+
+### Areas for Improvement
+- [improvement 1]
+- [improvement 2]
+
+### Recommended Next Steps
+[2-3 specific actions the user should take]
+```
+
+**User Prompt Structure:**
 ```
 # Collection: [Collection Name]
-You completed [X] problems. Here's a summary of your performance:
 
-## Individual Problem Summaries
-[For each problem in collection:]
-### Problem [N]: [Title]
-- Your response: [excerpt or summary]
-- Individual feedback: [excerpt or key points]
+The user completed [X] problems. Here are their responses and any individual feedback received:
 
-## Overall Assessment
-Analyze the user's performance across all problems and provide:
-1. Consistent strengths observed across problems
-2. Recurring areas for improvement
-3. Recommended focus areas for future practice
-4. Overall readiness assessment for [target role if known]
+## Problem 1: [Title]
+**Question:** [First 200 chars of prompt]...
+**User's Response:** [First 500 chars of response]...
+**Individual Feedback Summary:** [First 300 chars if exists]...
+
+---
+
+## Problem 2: [Title]
+...
+
+---
+
+Provide aggregate feedback analyzing patterns across all [X] problems.
 ```
 
 ---

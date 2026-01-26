@@ -55,16 +55,16 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${appUrl}/reset-password`);
     }
 
-    // For email confirmation, check if user has username
+    // After confirmation, check onboarding completion
     const { data: session } = await supabase.auth.getSession();
     if (session?.session?.user) {
       const { data: profile, error: profileError } = await supabase
         .from("users")
-        .select("username")
+        .select("onboarding_completed_at")
         .eq("id", session.session.user.id)
         .single();
 
-      if (profileError || !profile?.username) {
+      if (profileError || !profile?.onboarding_completed_at) {
         const onboardingUrl = new URL("/onboarding", origin);
         onboardingUrl.searchParams.set("next", nextPath);
         return NextResponse.redirect(onboardingUrl.toString());
@@ -82,11 +82,11 @@ export async function GET(request: Request) {
       if (user) {
         const { data: profile, error: profileError } = await supabase
           .from("users")
-          .select("username")
+          .select("onboarding_completed_at")
           .eq("id", user.id)
           .single();
 
-        if (profileError || !profile?.username) {
+        if (profileError || !profile?.onboarding_completed_at) {
           const onboardingUrl = new URL("/onboarding", origin);
           onboardingUrl.searchParams.set("next", nextPath);
           return NextResponse.redirect(onboardingUrl.toString());

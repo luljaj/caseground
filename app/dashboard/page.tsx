@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CreditCard } from "@/components/dashboard/CreditCard";
 import { SubscriptionCard } from "@/components/dashboard/SubscriptionCard";
@@ -10,8 +9,17 @@ import { useSettings } from "@/lib/hooks/useSettings";
 import Spinner from "@/components/ui/Spinner";
 import Button from "@/components/ui/Button";
 import TypeBreakdownChart from "@/components/dashboard/TypeBreakdownChart";
+import CompletedCollections, {
+  type CompletedCollectionCard,
+} from "@/components/dashboard/CompletedCollections";
+import PreferencesCard from "@/components/dashboard/PreferencesCard";
+import { useOnboarding } from "@/lib/hooks/useOnboarding";
 import { cn } from "@/lib/utils/cn";
-import type { StatsPayload } from "@/types";
+import {
+  type Collection,
+  type StatsPayload,
+  type UserCollectionCompletion,
+} from "@/types";
 
 const settingsOptions: Array<{
   key: "autoStartTimer" | "timerSound" | "speechToTextReady" | "showPracticeTips";
@@ -44,9 +52,11 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
   const { settings, updateSetting } = useSettings();
+  const { preferences, completeOnboarding } = useOnboarding();
   const [stats, setStats] = useState<StatsPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [completedCollections, setCompletedCollections] = useState<CompletedCollectionCard[]>([]);
 
   useEffect(() => {
     if (!user) {
@@ -74,6 +84,65 @@ export default function DashboardPage() {
     }
 
     loadStats();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      setCompletedCollections([]);
+      return;
+    }
+
+    let isMounted = true;
+
+    async function loadCompletedCollections() {
+      try {
+        const [collectionsRes, completionsRes] = await Promise.all([
+          fetch("/api/collections", { cache: "no-store" }),
+          fetch("/api/collections/complete", { cache: "no-store" }),
+        ]);
+
+        if (!collectionsRes.ok || !completionsRes.ok) {
+          return;
+        }
+
+        const collectionsPayload = await collectionsRes.json();
+        const completionsPayload = await completionsRes.json();
+        const collections = (collectionsPayload.collections ?? []) as Collection[];
+        const completions = (completionsPayload.completions ?? []) as UserCollectionCompletion[];
+
+        const collectionMap = new Map<string, Collection>();
+        collections.forEach((collection) => {
+          collectionMap.set(collection.id, collection);
+        });
+
+        const completed = completions
+          .map((completion) => {
+            const collection = collectionMap.get(completion.collection_id);
+            if (!collection) {
+              return null;
+            }
+            return {
+              id: collection.id,
+              name: collection.name,
+              slug: collection.slug,
+              completedAt: completion.completed_at,
+            } satisfies CompletedCollectionCard;
+          })
+          .filter(Boolean) as CompletedCollectionCard[];
+
+        if (isMounted) {
+          setCompletedCollections(completed);
+        }
+      } catch {
+        return;
+      }
+    }
+
+    loadCompletedCollections();
 
     return () => {
       isMounted = false;
@@ -166,6 +235,11 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      <PreferencesCard
+        currentRole={preferences?.target_role ?? null}
+        onSave={(role) => completeOnboarding(role, false)}
+      />
+
       {/* Settings Card - Separate */}
       <div className="animate-fade-up" style={{ animationDelay: "50ms" }}>
         <div className="rounded-3xl border border-zinc-700/50 bg-zinc-800/50 p-8 transition-colors">
@@ -234,6 +308,8 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      <CompletedCollections collections={completedCollections} />
 
       <div className="pt-2">
         <Button

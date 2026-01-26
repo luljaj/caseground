@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { useQueue } from "@/lib/hooks/useQueue";
-import { useSettings } from "@/lib/hooks/useSettings";
 import Spinner from "@/components/ui/Spinner";
 import RubricChecklist from "@/components/results/RubricChecklist";
 import AIFeedback from "@/components/results/AIFeedback";
@@ -14,10 +12,7 @@ import type { Question, UserResponse } from "@/types";
 export default function ResultsPage() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { user } = useAuth();
-  const { settings } = useSettings();
-  const { state: queueState, advanceQueue } = useQueue();
   const id = params?.id as string;
   const responseId = searchParams.get("response_id");
 
@@ -107,33 +102,6 @@ export default function ResultsPage() {
     return () => { isMounted = false; };
   }, [user]);
 
-  useEffect(() => {
-    const currentQueueId = queueState.problemIds[queueState.currentIndex];
-    if (
-      !queueState.isPlaying ||
-      !settings.showResultsBetween ||
-      (currentQueueId && currentQueueId !== id)
-    ) return;
-
-    const nextId = queueState.problemIds[queueState.currentIndex + 1];
-    const delayMs = Math.max(1, settings.resultsDelay) * 1000;
-    const timer = setTimeout(() => {
-      advanceQueue();
-      if (nextId) router.push(`/problems/${nextId}`);
-    }, delayMs);
-
-    return () => clearTimeout(timer);
-  }, [
-    queueState.isPlaying,
-    queueState.currentIndex,
-    queueState.problemIds,
-    id,
-    settings.showResultsBetween,
-    settings.resultsDelay,
-    advanceQueue,
-    router,
-  ]);
-
   const handleCheckedChange = useCallback((count: number) => {
     setCheckedCount(count);
   }, []);
@@ -171,13 +139,6 @@ export default function ResultsPage() {
         <h1 className="text-2xl font-semibold text-text-primary">Results</h1>
         <p className="text-sm text-text-secondary mt-1">Review your performance and get feedback.</p>
       </div>
-
-      {/* Queue indicator */}
-      {queueState.isPlaying && settings.showResultsBetween && (
-        <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-4 py-3 text-xs text-blue-200 animate-fade-up-1">
-          Advancing to the next problem soon.
-        </div>
-      )}
 
       {/* Side-by-side comparison */}
       <div className="grid gap-6 lg:grid-cols-2 animate-fade-up-1">

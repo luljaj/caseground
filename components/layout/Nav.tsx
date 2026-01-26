@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import Logo from "./Logo";
 import AuthButton from "./AuthButton";
@@ -14,6 +16,12 @@ export default function Nav() {
               href="/problems"
             >
               Problems
+            </Link>
+            <Link
+              className="transition-colors duration-200 hover:text-text-primary focus-visible:outline-none focus-visible:text-text-primary"
+              href="/collections"
+            >
+              Collections
             </Link>
             <Link
               className="transition-colors duration-200 hover:text-text-primary focus-visible:outline-none focus-visible:text-text-primary"

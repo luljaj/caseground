@@ -10,10 +10,10 @@ Google OAuth via Supabase Auth is required for saving responses and AI feedback.
 
 ## Tech Stack
 - Next.js 14 (App Router) + TypeScript
-- Tailwind CSS (dark navy theme)
+- Tailwind CSS (near-black, minimal palette)
 - Supabase (Postgres + Auth)
 - Web Speech API (speech-to-text)
-- External AI API for feedback (model and provider TBD)
+- OpenRouter API for feedback (model set via `DEFAULT_MODEL`)
 
 ## Project Structure (high level)
 - `app/` App Router pages and API routes
@@ -21,14 +21,14 @@ Google OAuth via Supabase Auth is required for saving responses and AI feedback.
   - `app/problems/page.tsx` list + filters + pagination
   - `app/problems/[id]/page.tsx` question detail + timer + input
   - `app/problems/[id]/results/page.tsx` results + rubric + AI feedback
-  - `app/dashboard/page.tsx` stats + heatmap
+  - `app/dashboard/page.tsx` stats + credits + type breakdown
   - `app/api/*` Next.js route handlers
 - `components/` UI building blocks
   - `components/layout/*` nav + auth
   - `components/problems/*` list + filters + pagination
   - `components/question/*` prompt pane + timer + speech
   - `components/results/*` rubric + example + AI feedback
-  - `components/dashboard/*` stats + heatmap
+  - `components/dashboard/*` stats + breakdown chart
   - `components/ui/*` Button, Input, Modal, Spinner
 - `lib/`
   - `lib/supabase/*` server/browser clients + middleware
@@ -45,6 +45,7 @@ Google OAuth via Supabase Auth is required for saving responses and AI feedback.
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `AI_API_URL`
    - `AI_API_KEY`
+   - `DEFAULT_MODEL`
    - `NEXT_PUBLIC_APP_URL`
 3. Apply migrations to remote Supabase: `supabase db push`
 4. Run dev server: `npm run dev`
@@ -52,13 +53,15 @@ Google OAuth via Supabase Auth is required for saving responses and AI feedback.
 Notes:
 - Supabase keys are in the Supabase dashboard: Project Settings -> API.
 - Google OAuth must be enabled in Supabase Auth -> Providers -> Google.
+- `AI_API_URL` should point to OpenRouter chat completions (e.g. `https://openrouter.ai/api/v1/chat/completions`).
+- `DEFAULT_MODEL` should be an OpenRouter model id (e.g. `openai/gpt-4o-mini`).
 
 ## Database Schema (current)
 Table: `public.questions`
 - `id` uuid PK
 - `number` integer unique
-- `track` text: `estimations | behaviorals | reasoning`
-- `category` text (estimations: `market-sizing | volume | cost-revenue`; behaviorals: `easy | medium | hard`; reasoning: `logic | Financial Statements | Valuation | DCF Analysis | Merger Models | LBO Models`)
+- `track` enum: `estimations | behaviorals | reasoning`
+- `category` enum (estimations: `market-sizing | volume | cost-revenue`; behaviorals: `easy | medium | hard`; reasoning: `logic | Financial Statements | Valuation | DCF Analysis | Merger Models | LBO Models`)
 - `title` text (short 2-3 word title)
 - `prompt` text (main question prompt)
 - `description` text (extended clarification)
@@ -124,7 +127,7 @@ All routes live in `app/api/*`.
 - `GET /api/user`
   - Requires auth. Returns `{ user }`
 - `GET /api/stats`
-  - Requires auth. Returns `{ totalAttempted, aiCredits, heatmap }`
+  - Requires auth. Returns `{ totalAttempted, aiCredits, byType, subscription }`
 
 ## Auth Flow
 - Client uses Supabase OAuth (Google) from `components/layout/AuthProvider.tsx`.
@@ -133,22 +136,21 @@ All routes live in `app/api/*`.
 
 ## UI Flows
 - **Landing** (`/`): intro + CTA to problems
-- **Problems** (`/problems`): table-first list with title + prompt preview, filters + sorting + pagination, optional "Not done" toggle, plus List View / Queue View switch
+- **Problems** (`/problems`): table-first list with title + prompt preview, filters + sorting + pagination, optional "Not done" toggle
+- **Collections**: standardized practice sets (curated in DB + custom local) with ordered playback and completion tracking
 - **Question** (`/problems/[id]`):
   - Question tab (title, prompt, description)
   - Submissions tab (requires auth)
   - Timer and response input (speech-to-text supported)
 - **Results** (`/problems/[id]/results`): response summary + rubric + example + AI feedback
-- **Dashboard** (`/dashboard`): total attempted + credits + heatmap
+- **Dashboard** (`/dashboard`): total attempted + credits + type breakdown
 
-## Queue Mode
-- **Build the queue:** switch to Queue View on `/problems`, click "Add More" to enter add mode, and use the [+] buttons in List View to add/remove items. You can also add the current problem from the question page.
-- **Filtered queue:** the queue respects current filters and the "Hide completed" toggle. Starting a queue skips completed problems if the setting is enabled.
-- **Playback:** starting the queue opens the first problem and shows the queue overlay (bottom center). Submitting a response advances to the next problem. Skip/Next advances without submitting.
-- **Results between problems:** if enabled, the results page shows briefly and then auto-advances after a configurable delay.
-- **Completion:** when the queue finishes, the overlay shows a summary with "View Results" links for completed responses.
-- **Storage:** queue state and settings live in localStorage (no database sync).
-- **Settings:** queue-specific settings live in Queue View; practice settings (auto-start timer, timer sound, speech-to-text ready) live in the dashboard.
+## Collections
+- **Standardized practice mode:** collections replace queue mode for multi-problem sessions.
+- **Sources:** curated collections live in Supabase; custom collections can be stored locally.
+- **Playback:** starting a collection advances through the ordered problems; submissions are saved as usual.
+- **Progress:** session progress lives in `sessionStorage`; completions are stored in `user_collection_completions`.
+- **Limits:** max 20 problems per collection.
 
 ## Speech-to-text
 - Hook: `lib/hooks/useSpeechToText.ts`
@@ -164,10 +166,10 @@ All routes live in `app/api/*`.
 - When finished, timer pulses red until stopped.
 
 ## Styling
-- Tailwind with design tokens in `app/globals.css` (dark navy palette).
-- Visual language: LeetCode data density + Linear minimalism (tight table layout,
-  subtle borders, 4–6px radius, 150ms transitions, muted accent).
-- Typeface: Manrope via `app/layout.tsx`.
+- Tailwind with design tokens in `app/globals.css` (near-black palette, muted accents).
+- Visual language: purposeful minimalism + subtle depth (tight table layout,
+  subtle borders, 4–6px radius, 150–200ms transitions).
+- Typeface: Inter via `app/layout.tsx`.
 - Utility helper: `lib/utils/cn.ts` for class merging.
 
 ## Common Tasks
@@ -177,6 +179,7 @@ All routes live in `app/api/*`.
   `/api/questions` query logic.
 - **Adjust AI feedback provider:** Update `app/api/feedback/route.ts` to match
   the external API contract.
+- **Enum conventions:** Use Postgres enums for constrained fields (e.g. `track`, `category`, `target_role`) in new migrations.
 
 ## Troubleshooting
 - "Unsupported provider" during Google auth: enable Google provider in Supabase
