@@ -176,7 +176,7 @@ export default function HomePage() {
             className="text-center mb-16"
           >
             <motion.h2 variants={blurIn} className="text-3xl md:text-5xl font-semibold text-white tracking-tight mb-4">
-              See what's working. Fix what's not.
+              See what&apos;s working. Fix what&apos;s not.
             </motion.h2>
             <motion.p variants={blurIn} transition={{ delay: 0.2 }} className="text-zinc-400 text-lg max-w-2xl mx-auto">
               Get detailed analysis on your responses immediately. Identify patterns, improve structure, and sharpen your communication.
