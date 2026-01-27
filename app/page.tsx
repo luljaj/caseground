@@ -134,10 +134,7 @@ export default function HomePage() {
               viewport={{ once: true, margin: "-150px" }}
               className="order-1 lg:order-2"
             >
-              <motion.div variants={blurIn} className="inline-flex items-center gap-2 p-2 pr-4 bg-zinc-800 text-zinc-100 rounded-full text-xs font-medium mb-6 border border-zinc-700">
-                <span className="p-1 px-2 bg-zinc-100 text-zinc-900 rounded-full">New</span>
-                Collections are here
-              </motion.div>
+
               <motion.h2 variants={blurIn} transition={{ delay: 0.2 }} className="text-3xl md:text-4xl font-semibold text-white tracking-tight mb-6">
                 Simulate the pressure
               </motion.h2>
