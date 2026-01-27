@@ -15,15 +15,26 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const questionId = searchParams.get("question_id");
+  const includeQuestion = searchParams.get("include_question") === "1";
+  const limitParam = Number(searchParams.get("limit"));
+  const limit = Number.isFinite(limitParam) && limitParam > 0 ? limitParam : null;
 
   let query = supabase
     .from("user_responses")
-    .select("*")
+    .select(
+      includeQuestion
+        ? "id, user_id, question_id, response, time_taken, ai_feedback, created_at, questions ( id, title, track, category, number )"
+        : "*"
+    )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   if (questionId) {
     query = query.eq("question_id", questionId);
+  }
+
+  if (limit) {
+    query = query.limit(limit);
   }
 
   const { data, error } = await query;

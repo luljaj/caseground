@@ -167,9 +167,16 @@ Use this structure:
   userPrompt += `The user completed ${responses.length} problems. Here are their responses and any individual feedback received:\n\n`;
 
   responses.forEach((entry, index) => {
-    const question = entry.questions as { title: string; prompt: string };
-    userPrompt += `## Problem ${index + 1}: ${question.title}\n`;
-    userPrompt += `**Question:** ${question.prompt.slice(0, 200)}...\n\n`;
+    const questionData = entry.questions as
+      | { title?: string | null; prompt?: string | null; rubric?: string | null }
+      | Array<{ title?: string | null; prompt?: string | null; rubric?: string | null }>
+      | null;
+    const question = Array.isArray(questionData) ? questionData[0] : questionData;
+    const title = question?.title?.trim() || "Untitled Problem";
+    const prompt = question?.prompt?.trim() || "No prompt provided.";
+
+    userPrompt += `## Problem ${index + 1}: ${title}\n`;
+    userPrompt += `**Question:** ${prompt.slice(0, 200)}...\n\n`;
     userPrompt += `**User's Response:**\n${entry.response.slice(0, 500)}${entry.response.length > 500 ? "..." : ""}\n\n`;
     if (entry.ai_feedback) {
       userPrompt += `**Individual Feedback Summary:**\n${entry.ai_feedback.slice(0, 300)}...\n\n`;
@@ -233,7 +240,7 @@ Use this structure:
   const content =
     typeof parsed === "object" && parsed !== null
       ? (parsed as { choices?: { message?: { content?: string } }[] })
-          ?.choices?.[0]?.message?.content ?? rawText
+        ?.choices?.[0]?.message?.content ?? rawText
       : rawText;
 
   const feedback =

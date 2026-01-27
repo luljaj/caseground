@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Spinner from "@/components/ui/Spinner";
 import CollectionCard from "@/components/collections/CollectionCard";
-import CollectionSection from "@/components/collections/CollectionSection";
+import CollectionSectionComponent from "@/components/collections/CollectionSection";
 import CreateCustomModal from "@/components/collections/CreateCustomModal";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useOnboarding } from "@/lib/hooks/useOnboarding";
@@ -233,7 +233,7 @@ export default function CollectionsPage() {
       </div>
 
       {customCards.length > 0 ? (
-        <CollectionSection title="Your Custom Collections">
+        <CollectionSectionComponent title="Your Custom Collections">
           {customCards.map((collection) => (
             <CollectionCard
               key={collection.id}
@@ -248,11 +248,11 @@ export default function CollectionsPage() {
               actionLabel="Start"
             />
           ))}
-        </CollectionSection>
+        </CollectionSectionComponent>
       ) : null}
 
       {recommendedCollections.length > 0 ? (
-        <CollectionSection title="Recommended For You">
+        <CollectionSectionComponent title="Recommended For You">
           {recommendedCollections.map((collection) => (
             <CollectionCard
               key={collection.id}
@@ -266,7 +266,7 @@ export default function CollectionsPage() {
               href={`/collections/${collection.slug}`}
             />
           ))}
-        </CollectionSection>
+        </CollectionSectionComponent>
       ) : null}
 
       {JOB_SECTIONS.map((section) => {
@@ -277,7 +277,7 @@ export default function CollectionsPage() {
           return null;
         }
         return (
-          <CollectionSection
+          <CollectionSectionComponent
             key={section}
             title={COLLECTION_SECTION_LABELS[section]}
           >
@@ -294,7 +294,7 @@ export default function CollectionsPage() {
                 href={`/collections/${collection.slug}`}
               />
             ))}
-          </CollectionSection>
+          </CollectionSectionComponent>
         );
       })}
 
@@ -306,7 +306,7 @@ export default function CollectionsPage() {
           return null;
         }
         return (
-          <CollectionSection
+          <CollectionSectionComponent
             key={section}
             title={COLLECTION_SECTION_LABELS[section]}
           >
@@ -323,7 +323,7 @@ export default function CollectionsPage() {
                 href={`/collections/${collection.slug}`}
               />
             ))}
-          </CollectionSection>
+          </CollectionSectionComponent>
         );
       })}
 

@@ -26,14 +26,10 @@ export default function AIFeedback({
   const [activeFeedbackId, setActiveFeedbackId] = useState<string | null>(null);
   const [activeMeta, setActiveMeta] = useState<{
     createdAt: string | null;
-    model: string | null;
     tokensUsed: number | null;
-    generationTimeMs: number | null;
   }>({
     createdAt: null,
-    model: null,
     tokensUsed: null,
-    generationTimeMs: null,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,9 +40,7 @@ export default function AIFeedback({
       setActiveFeedbackId(null);
       setActiveMeta({
         createdAt: null,
-        model: null,
         tokensUsed: null,
-        generationTimeMs: null,
       });
       return;
     }
@@ -54,9 +48,7 @@ export default function AIFeedback({
     setActiveFeedbackId(entry.id);
     setActiveMeta({
       createdAt: entry.created_at ?? null,
-      model: entry.model ?? null,
       tokensUsed: entry.tokens_used ?? null,
-      generationTimeMs: entry.generation_time_ms ?? null,
     });
     setFeedback(entry.content ?? "");
   }, []);
@@ -155,11 +147,9 @@ export default function AIFeedback({
   const metadataLabel = activeMeta.createdAt
     ? `Generated ${new Date(activeMeta.createdAt).toLocaleString()}`
     : "";
-  const modelLabel = activeMeta.model ? ` | ${activeMeta.model}` : "";
-  const usageLabel =
-    activeMeta.tokensUsed || activeMeta.generationTimeMs
-      ? ` | ${activeMeta.tokensUsed ?? "?"} tokens | ${activeMeta.generationTimeMs ?? "?"}ms`
-      : "";
+  const usageLabel = activeMeta.tokensUsed
+    ? ` | ${activeMeta.tokensUsed} tokens`
+    : "";
   const showRetry = Boolean(error) && !feedback;
 
   return (
@@ -190,7 +180,6 @@ export default function AIFeedback({
         {metadataLabel && (
           <p className="mt-1 text-[11px] text-zinc-500">
             {metadataLabel}
-            {modelLabel}
             {usageLabel}
           </p>
         )}

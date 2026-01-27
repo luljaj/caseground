@@ -165,12 +165,16 @@ export default function CollectionCompletePage() {
     }
 
     let isMounted = true;
+    const collectionId = collection?.id;
 
     async function markComplete() {
+      if (!collectionId) {
+        return;
+      }
       const result = await fetch("/api/collections/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ collection_id: collection.id }),
+        body: JSON.stringify({ collection_id: collectionId }),
       });
 
       if (!result.ok) {
@@ -245,7 +249,7 @@ export default function CollectionCompletePage() {
             ) : null}
           </div>
         </div>
-        <Button size="sm" variant="ghost" onClick={() => router.push("/collections")}> 
+        <Button size="sm" variant="ghost" onClick={() => router.push("/collections")}>
           Back to Collections
         </Button>
       </div>

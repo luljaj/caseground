@@ -12,12 +12,16 @@ import TypeBreakdownChart from "@/components/dashboard/TypeBreakdownChart";
 import CompletedCollections, {
   type CompletedCollectionCard,
 } from "@/components/dashboard/CompletedCollections";
+import RecentResponses, {
+  type RecentResponseCard,
+} from "@/components/dashboard/RecentResponses";
 import PreferencesCard from "@/components/dashboard/PreferencesCard";
 import { useOnboarding } from "@/lib/hooks/useOnboarding";
 import { cn } from "@/lib/utils/cn";
 import {
   type Collection,
   type StatsPayload,
+  type UserResponse,
   type UserCollectionCompletion,
 } from "@/types";
 
@@ -57,6 +61,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [completedCollections, setCompletedCollections] = useState<CompletedCollectionCard[]>([]);
+  const [recentResponses, setRecentResponses] = useState<RecentResponseCard[]>([]);
 
   useEffect(() => {
     if (!user) {
@@ -143,6 +148,66 @@ export default function DashboardPage() {
     }
 
     loadCompletedCollections();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      setRecentResponses([]);
+      return;
+    }
+
+    let isMounted = true;
+
+    async function loadRecentResponses() {
+      try {
+        const response = await fetch("/api/responses?limit=6&include_question=1", {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = await response.json();
+        const items = (payload.responses ?? []) as Array<
+          UserResponse & { questions?: { id?: string; title?: string; track?: string; category?: string } | { id?: string; title?: string; track?: string; category?: string }[] }
+        >;
+
+        const mapped = items.map((entry) => {
+          const questionData = Array.isArray(entry.questions)
+            ? entry.questions[0]
+            : entry.questions;
+          const title = questionData?.title ?? "Untitled problem";
+          const preview =
+            entry.response.length > 140
+              ? `${entry.response.slice(0, 140)}...`
+              : entry.response;
+
+          return {
+            id: entry.id,
+            questionId: entry.question_id,
+            title,
+            track: (questionData?.track as RecentResponseCard["track"]) ?? null,
+            category: questionData?.category ?? null,
+            createdAt: entry.created_at,
+            responsePreview: preview,
+            timeTaken: entry.time_taken ?? null,
+          } satisfies RecentResponseCard;
+        });
+
+        if (isMounted) {
+          setRecentResponses(mapped);
+        }
+      } catch {
+        return;
+      }
+    }
+
+    loadRecentResponses();
 
     return () => {
       isMounted = false;
@@ -310,6 +375,8 @@ export default function DashboardPage() {
       </div>
 
       <CompletedCollections collections={completedCollections} />
+
+      <RecentResponses responses={recentResponses} />
 
       <div className="pt-2">
         <Button

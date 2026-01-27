@@ -35,9 +35,6 @@ export default function FeedbackHistory({
       <div className="mt-3 space-y-2">
         {entries.map((entry, index) => {
           const isActive = entry.id === activeId;
-          const modelLabel = entry.model
-            ? `Model: ${entry.model}`
-            : "Model not recorded";
           const label = formatTimestamp(entry.created_at);
 
           return (
@@ -60,7 +57,6 @@ export default function FeedbackHistory({
                 </span>
                 <span>{label}</span>
               </div>
-              <div className="mt-1 text-[11px] text-zinc-500">{modelLabel}</div>
             </button>
           );
         })}

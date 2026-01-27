@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { formatTime } from "@/lib/utils/formatTime";
 import type { TimerStatus } from "@/lib/hooks/useTimer";
 import type { Question, UserResponse } from "@/types";
@@ -73,11 +74,10 @@ function ProblemTimerCard({
 
   return (
     <div
-      className={`absolute top-4 right-4 z-10 transition-all duration-200 ease-out ${
-        isVisible
-          ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
-          : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
-      }`}
+      className={`absolute top-4 right-4 z-10 transition-all duration-200 ease-out ${isVisible
+        ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
+        : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
+        }`}
     >
       <div className="bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 rounded-2xl overflow-hidden border border-zinc-700/50 shadow-2xl backdrop-blur-sm">
         <div className="p-8 min-w-[240px]">
@@ -204,16 +204,14 @@ export default function ProblemCard({
 
   const trackLabel = trackLabels[question.track] ?? question.track;
   const timeLabel = `${question.suggested_time} min`;
-  const problemPanelClasses = `absolute inset-0 p-6 transition-all duration-300 ease-out ${
-    activeTab === "problem"
-      ? "opacity-100 translate-x-0 blur-0 pointer-events-auto"
-      : "opacity-0 -translate-x-8 blur-sm pointer-events-none"
-  }`;
-  const historyPanelClasses = `absolute inset-0 p-6 transition-all duration-300 ease-out ${
-    activeTab === "history"
-      ? "opacity-100 translate-x-0 blur-0 pointer-events-auto"
-      : "opacity-0 translate-x-8 blur-sm pointer-events-none"
-  }`;
+  const problemPanelClasses = `absolute inset-0 p-6 transition-all duration-300 ease-out ${activeTab === "problem"
+    ? "opacity-100 translate-x-0 blur-0 pointer-events-auto"
+    : "opacity-0 -translate-x-8 blur-sm pointer-events-none"
+    }`;
+  const historyPanelClasses = `absolute inset-0 p-6 transition-all duration-300 ease-out ${activeTab === "history"
+    ? "opacity-100 translate-x-0 blur-0 pointer-events-auto"
+    : "opacity-0 translate-x-8 blur-sm pointer-events-none"
+    }`;
 
   return (
     <div className="relative h-full">
@@ -225,9 +223,8 @@ export default function ProblemCard({
               type="button"
               ref={problemRef}
               onClick={() => setActiveTab("problem")}
-              className={`${
-                activeTab === "problem" ? "text-white" : "text-zinc-500"
-              } transition-colors pb-2`}
+              className={`${activeTab === "problem" ? "text-white" : "text-zinc-500"
+                } transition-colors pb-2`}
               aria-pressed={activeTab === "problem"}
             >
               Problem
@@ -236,9 +233,8 @@ export default function ProblemCard({
               type="button"
               ref={historyRef}
               onClick={() => setActiveTab("history")}
-              className={`${
-                activeTab === "history" ? "text-white" : "text-zinc-500"
-              } transition-colors pb-2`}
+              className={`${activeTab === "history" ? "text-white" : "text-zinc-500"
+                } transition-colors pb-2`}
               aria-pressed={activeTab === "history"}
             >
               History
@@ -336,31 +332,36 @@ export default function ProblemCard({
                 </p>
               ) : responses.length > 0 ? (
                 responses.map((response, index) => (
-                  <div
+                  <Link
                     key={response.id}
-                    className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-4"
+                    href={`/problems/${question.id}/results?response_id=${response.id}`}
+                    className="group block rounded-xl border border-zinc-700/40 bg-gradient-to-br from-zinc-900/90 via-zinc-900/90 to-zinc-800/90 p-5 text-left transition-all duration-300 hover:border-zinc-600 hover:shadow-xl hover:shadow-black/20 hover:-translate-y-0.5"
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <span className="text-zinc-500 text-sm">
+                    <div className="mb-3 flex items-start justify-between">
+                      <span className="text-sm font-medium text-zinc-400 group-hover:text-zinc-300 transition-colors">
                         Attempt {responses.length - index}
                       </span>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 text-xs font-mono">
                         {response.time_taken ? (
-                          <span className="text-zinc-400 text-sm">
+                          <span className="text-zinc-500 group-hover:text-zinc-400 transition-colors bg-zinc-800/50 px-2 py-1 rounded-md">
                             {formatTimeTaken(response.time_taken)}
                           </span>
                         ) : null}
-                        <span className="text-zinc-500 text-sm">
+                        <span className="text-zinc-500 group-hover:text-zinc-400 transition-colors">
                           {formatAttemptDate(response.created_at)}
                         </span>
                       </div>
                     </div>
-                    <p className="text-zinc-400 text-sm">
-                      {response.response.length > 180
-                        ? `${response.response.slice(0, 180)}...`
-                        : response.response}
+                    <p className="text-sm text-zinc-400 leading-relaxed line-clamp-2 mb-3 group-hover:text-zinc-300 transition-colors">
+                      {response.response}
                     </p>
-                  </div>
+                    <div className="flex items-center gap-2 text-xs font-medium text-blue-400/80 group-hover:text-blue-400 transition-colors">
+                      <span>View full feedback</span>
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="transform transition-transform group-hover:translate-x-0.5">
+                        <path d="M2.5 6H9.5M9.5 6L6.5 3M9.5 6L6.5 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                  </Link>
                 ))
               ) : (
                 <p className="text-zinc-500 text-sm text-center py-8">

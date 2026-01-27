@@ -61,38 +61,36 @@ export default function AuthButton() {
     return <div className="text-xs text-text-secondary">Loading...</div>;
   }
 
+  // Common button styles
+  const buttonClasses =
+    "flex items-center justify-center rounded-xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 px-4 py-2 text-sm font-medium text-zinc-100 shadow-lg shadow-zinc-950/20 ring-1 ring-white/10 transition-all duration-300 hover:scale-[1.02] hover:ring-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/60";
+
   if (!user) {
     return (
       <button
         type="button"
-        className="rounded-2xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/60"
+        className={buttonClasses}
         onClick={() => router.push("/signin")}
       >
-        <HeroCard
-          username="Sign in"
-          email=""
-          variant="dark"
-        />
+        Sign in
       </button>
     );
   }
 
   const displayName = username ?? "User";
-  const displayEmail = user.email ?? "Signed in";
   const cardName = isUsernameLoading ? "Loading..." : displayName;
-  const cardEmail = isUsernameLoading ? "Fetching profile" : displayEmail;
 
   return (
     <div className="relative">
       <button
         type="button"
-        className="rounded-2xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300/60 disabled:cursor-not-allowed disabled:opacity-70"
+        className={buttonClasses}
         onClick={() => setOpen((prev) => !prev)}
         aria-haspopup="menu"
         aria-expanded={open}
         disabled={isUsernameLoading}
       >
-        <HeroCard username={cardName} email={cardEmail} variant="dark" />
+        <span className="truncate max-w-[100px] block">{cardName}</span>
       </button>
       {open && (
         <div className="absolute right-0 mt-2 w-48 rounded-md border border-border bg-surface p-2 text-sm shadow-[0_1px_3px_rgba(0,0,0,0.12)]">

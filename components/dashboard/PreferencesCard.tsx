@@ -33,7 +33,7 @@ export default function PreferencesCard({
       return;
     }
     setSaveState("saving");
-    const ok = await onSave(selectedRole === "" ? null : selectedRole);
+    const ok = await onSave(selectedRole);
     setSaveState(ok ? "saved" : "error");
     if (ok) {
       window.setTimeout(() => setSaveState("idle"), 2000);
